@@ -1,0 +1,25 @@
+{
+    "name": "selrahcd/postgresql-rabbitmq-integration",
+    "description": "Demo project for postgresql and rabbitmq integration with the outbox pattern",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "Selrahcd\\PostgresRabbitMq\\": "/src"
+        }
+    },
+    "require": {
+        "ext-PDO": "^7.4",
+        "php-amqplib/php-amqplib": "^2.12"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.3",
+        "ramsey/uuid": "^4.1",
+        "symfony/process": "^5.1"
+    },
+    "authors": [
+        {
+            "name": "SelrahcD",
+            "email": "c.desneuf@gmail.com"
+        }
+    ]
+}
