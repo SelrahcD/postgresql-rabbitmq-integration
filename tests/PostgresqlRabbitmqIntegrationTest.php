@@ -1,18 +1,22 @@
 <?php
 
 
-use PhpAmqpLib\Channel\AMQPChannel as AMQPChannelAlias;
+use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
-use PhpAmqpLib\Exchange\AMQPExchangeType;
 use PhpAmqpLib\Message\AMQPMessage;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
+use SelrahcD\PostgresRabbitMq\FixtureManagers;
+use SelrahcD\PostgresRabbitMq\Logger;
+use SelrahcD\PostgresRabbitMq\MessageStorage;
+use SelrahcD\PostgresRabbitMq\QueueExchangeManager;
+use SelrahcD\PostgresRabbitMq\UserRepository;
 use Symfony\Component\Process\Process;
 
 class PostgresqlRabbitmqIntegrationTest extends TestCase
 {
-    private static AMQPChannelAlias $channel;
+    private static AMQPChannel $channel;
 
     private static AMQPStreamConnection $connection;
 
@@ -28,36 +32,31 @@ class PostgresqlRabbitmqIntegrationTest extends TestCase
 
     private static string $username;
 
+    private static MessageStorage $messageStorage;
+
+    private static UserRepository $userRepository;
+
+    private static Logger $logger;
+
     public static function setUpBeforeClass(): void
     {
         $container = require __DIR__ . '/../src/container.php';
 
-        static::$connection = $container[AMQPStreamConnection::class]();
+        static::$connection = $container[AMQPStreamConnection::class];
 
         static::$channel = static::$connection->channel();
 
-        static::$channel->exchange_declare('messages_in', AMQPExchangeType::DIRECT);
-        static::$channel->queue_declare('incoming_message_queue');
-        static::$channel->queue_bind('incoming_message_queue', 'messages_in');
+        static::$pdo = $container[PDO::class];
 
+        static::$messageStorage = $container[MessageStorage::class];
 
-        static::$channel->exchange_declare('messages_out', AMQPExchangeType::DIRECT, false, false, false);
-        static::$channel->queue_declare('outgoing_message_queue',false, false, false , false);
-        static::$channel->queue_bind('outgoing_message_queue', 'messages_out');
+        static::$userRepository = $container[UserRepository::class];
 
-        static::$pdo = $container[PDO::class]();
+        static::$logger = new Logger(static::MESSAGE_LOG_FILE);
 
-        static::$pdo->exec("DROP TABLE IF EXISTS received_messages");
-        static::$pdo->exec(
-            "CREATE TABLE IF NOT EXISTS received_messages (
-                         message_id VARCHAR(255)
-         )");
+        QueueExchangeManager::setupQueues(static::$channel);
 
-        static::$pdo->exec("DROP TABLE IF EXISTS users");
-        static::$pdo->exec(
-            "CREATE TABLE IF NOT EXISTS users (
-                         username VARCHAR(255)
-         )");
+        FixtureManagers::setupFixtures(static::$pdo);
 
         static::$process = new Process(
             ['php', './src/worker.php'],
@@ -87,7 +86,6 @@ class PostgresqlRabbitmqIntegrationTest extends TestCase
         echo static::$process->getOutput();
     }
 
-
     public static function tearDownAfterClass(): void
     {
         static::$channel->close();
@@ -115,13 +113,7 @@ class PostgresqlRabbitmqIntegrationTest extends TestCase
                  $this->fail('Message wasn\'t received after 5 seconds.');
              }
 
-             $logFile = fopen(self::MESSAGE_LOG_FILE, 'r');
-
-             while (($line = fgets($logFile)) !== false) {
-                 if($line == 'received:' . static::$messageId->toString() . PHP_EOL) {
-                     $messageReceived = true;
-                 }
-             }
+             $messageReceived = static::$logger->hasReceivedMessageReceivedLogForMessageId(static::$messageId->toString());
          }
 
          self::assertTrue($messageReceived);
@@ -140,15 +132,7 @@ class PostgresqlRabbitmqIntegrationTest extends TestCase
                 $this->fail('Message wasn\'t stored in postgresql after 5 seconds.');
             }
 
-            $sth = static::$pdo->prepare("SELECT count(*) FROM received_messages WHERE message_id = :message_id");
-            $sth->bindParam(':message_id', static::$messageId->toString());
-            $sth->execute();
-
-            $count = $sth->fetchColumn();
-
-            if($count > 0) {
-                $messageReceived = true;
-            }
+            $messageReceived = static::$messageStorage->wasMessageOfIdReceived(static::$messageId->toString());
         }
 
         self::assertTrue($messageReceived);
@@ -167,15 +151,7 @@ class PostgresqlRabbitmqIntegrationTest extends TestCase
                  $this->fail('User wasn\'t stored in users table after 5 seconds');
              }
 
-             $sth = static::$pdo->prepare("SELECT count(*) FROM users WHERE username = :username");
-             $sth->bindParam(':username', static::$username);
-             $sth->execute();
-
-             $count = $sth->fetchColumn();
-
-             if($count > 0) {
-                 $messageReceived = true;
-             }
+             $messageReceived = static::$userRepository->isUsernameRegistered(static::$username);
          }
 
          self::assertTrue($messageReceived);
