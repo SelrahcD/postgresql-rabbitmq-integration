@@ -1,6 +1,5 @@
 <?php
 
-
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -14,29 +13,29 @@ use SelrahcD\PostgresRabbitMq\QueueExchangeManager;
 use SelrahcD\PostgresRabbitMq\UserRepository;
 use Symfony\Component\Process\Process;
 
-class PostgresqlRabbitmqIntegrationTest extends TestCase
+abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
 {
-    private static AMQPChannel $channel;
+    protected static AMQPChannel $channel;
 
-    private static AMQPStreamConnection $connection;
+    protected static AMQPStreamConnection $connection;
 
-    private const MESSAGE_LOG_FILE = __DIR__ . '/../var/logs/test/messages.log';
+    protected const MESSAGE_LOG_FILE = __DIR__ . '/../var/logs/test/messages.log';
     /**
      * @var Process
      */
-    private static Process $process;
+    protected static Process $process;
 
-    private static PDO $pdo;
+    protected static PDO $pdo;
 
-    private static UuidInterface $messageId;
+    protected static UuidInterface $messageId;
 
-    private static string $username;
+    protected static string $username;
 
-    private static MessageStorage $messageStorage;
+    protected static MessageStorage $messageStorage;
 
-    private static UserRepository $userRepository;
+    protected static UserRepository $userRepository;
 
-    private static Logger $logger;
+    protected static Logger $logger;
 
     public static function setUpBeforeClass(): void
     {
@@ -100,94 +99,5 @@ class PostgresqlRabbitmqIntegrationTest extends TestCase
         touch(self::MESSAGE_LOG_FILE);
     }
 
-    /**
-     * @test
-     */
-     public function worker_receives_a_message(): void
-     {
-         $start = time();
-         $messageReceived = false;
-         while(!$messageReceived) {
 
-             if(time() - $start > 5) {
-                 $this->fail('Message wasn\'t received after 5 seconds.');
-             }
-
-             $messageReceived = static::$logger->hasReceivedMessageReceivedLogForMessageId(static::$messageId->toString());
-         }
-
-         self::assertTrue($messageReceived);
-     }
-
-    /**
-     * @test
-     */
-    public function message_is_marked_as_received_in_postgresql(): void
-    {
-        $start = time();
-        $messageReceived = false;
-        while(!$messageReceived) {
-
-            if(time() - $start > 5) {
-                $this->fail('Message wasn\'t stored in postgresql after 5 seconds.');
-            }
-
-            $messageReceived = static::$messageStorage->wasMessageOfIdReceived(static::$messageId->toString());
-        }
-
-        self::assertTrue($messageReceived);
-    }
-    
-    /**
-     * @test
-     */
-     public function user_is_stored_in_users_table(): void
-     {
-         $start = time();
-         $messageReceived = false;
-         while(!$messageReceived) {
-
-             if(time() - $start > 5) {
-                 $this->fail('User wasn\'t stored in users table after 5 seconds');
-             }
-
-             $messageReceived = static::$userRepository->isUsernameRegistered(static::$username);
-         }
-
-         self::assertTrue($messageReceived);
-     }
-
-    /**
-     * @test
-     */
-    public function userRegistered_event_is_published(): void
-    {
-        $receivedMessages = [];
-
-        $callback = function (AMQPMessage $message) use(&$receivedMessages){
-            $receivedMessages[] = $message->body;
-        };
-
-        static::$channel->basic_consume('outgoing_message_queue', '', false, true, false, false, $callback);
-
-        $start = time();
-        $messageReceived = false;
-        $expectedMessage = json_encode(['eventName' => 'UserRegistered', 'username' => self::$username]);
-        while(!$messageReceived) {
-
-            static::$channel->wait(null, true);
-
-            if(time() - $start > 5) {
-                $this->fail('UserRegistered event wasn\'t received after 5 seconds');
-            }
-
-            foreach ($receivedMessages as $receivedMessage) {
-                if($receivedMessage === $expectedMessage) {
-                    $messageReceived = true;
-                }
-            }
-        }
-
-        self::assertTrue($messageReceived);
-    }
 }
