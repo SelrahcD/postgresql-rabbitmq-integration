@@ -43,6 +43,11 @@ class PostgresqlRabbitmqIntegrationTest extends TestCase
         static::$channel->queue_declare('incoming_message_queue');
         static::$channel->queue_bind('incoming_message_queue', 'messages_in');
 
+
+        static::$channel->exchange_declare('messages_out', AMQPExchangeType::DIRECT, false, false, false);
+        static::$channel->queue_declare('outgoing_message_queue',false, false, false , false);
+        static::$channel->queue_bind('outgoing_message_queue', 'messages_out');
+
         $postgresHost = getenv('POSTGRES_HOST');
         $postgresDB = getenv('POSTGRES_DB');
         $postgresUsername = getenv('POSTGRES_USER');
@@ -85,7 +90,6 @@ class PostgresqlRabbitmqIntegrationTest extends TestCase
 
         $message = new AMQPMessage($messageBody, ['message_id' => static::$messageId]);
 
-        echo "Publish message";
         static::$channel->basic_publish($message, 'messages_in');
     }
 
@@ -187,4 +191,38 @@ class PostgresqlRabbitmqIntegrationTest extends TestCase
 
          self::assertTrue($messageReceived);
      }
+
+    /**
+     * @test
+     */
+    public function userRegistered_event_is_published(): void
+    {
+        $receivedMessages = [];
+
+        $callback = function (AMQPMessage $message) use(&$receivedMessages){
+            $receivedMessages[] = $message->body;
+        };
+
+        static::$channel->basic_consume('outgoing_message_queue', '', false, true, false, false, $callback);
+
+        $start = time();
+        $messageReceived = false;
+        $expectedMessage = json_encode(['eventName' => 'UserRegistered', 'username' => self::$username]);
+        while(!$messageReceived) {
+
+            static::$channel->wait(null, true);
+
+            if(time() - $start > 5) {
+                $this->fail('UserRegistered event wasn\'t received after 5 seconds');
+            }
+
+            foreach ($receivedMessages as $receivedMessage) {
+                if($receivedMessage === $expectedMessage) {
+                    $messageReceived = true;
+                }
+            }
+        }
+
+        self::assertTrue($messageReceived);
+    }
 }

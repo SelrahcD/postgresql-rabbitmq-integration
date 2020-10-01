@@ -19,6 +19,9 @@ $channel->exchange_declare('messages_in', AMQPExchangeType::DIRECT);
 $channel->queue_declare('incoming_message_queue');
 $channel->queue_bind('incoming_message_queue', 'messages_in');
 
+$channel->exchange_declare('messages_out', AMQPExchangeType::DIRECT, false, false, false);
+$channel->queue_declare('outgoing_message_queue',false, false, false , false);
+$channel->queue_bind('outgoing_message_queue', 'messages_out');
 
 $postgresHost = getenv('POSTGRES_HOST');
 $postgresDB = getenv('POSTGRES_DB');
@@ -82,15 +85,24 @@ $logger = new class(getenv('MESSAGE_LOG_FILE')) {
     }
 };
 
-$callback = function (AMQPMessage $message) use($logger, $messageStorage, $userRepository) {
+$callback = function (AMQPMessage $message) use($logger, $messageStorage, $userRepository, $channel) {
 
     echo '[x] Received ', $message->body, "\n";
 
     $data = json_decode($message->body, true);
+    $username = $data['username'];
 
     $logger->logMessageReceived($message);
     $messageStorage->storeMessageWasReceived($message);
-    $userRepository->registerUser($data['username']);
+    $userRepository->registerUser($username);
+
+
+    $event = new AMQPMessage(json_encode([
+        'eventName' => 'UserRegistered',
+        'username' => $username
+    ]));
+
+    $channel->basic_publish($event, 'messages_out');
 };
 
 $channel->basic_consume('incoming_message_queue', '', false, true, false, false, $callback);
