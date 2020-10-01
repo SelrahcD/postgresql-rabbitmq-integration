@@ -5,13 +5,9 @@ use PhpAmqpLib\Exchange\AMQPExchangeType;
 use PhpAmqpLib\Message\AMQPMessage;
 
 require_once __DIR__ . '/../vendor/autoload.php';
+$container = require __DIR__ . '/container.php';
 
-$connection = new AMQPStreamConnection(
-    getenv('RABBITMQ_HOST'),
-    getenv('RABBITMQ_PORT'),
-    getenv('RABBITMQ_DEFAULT_USER'),
-    getenv('RABBITMQ_DEFAULT_PASS')
-);
+$connection = $container[AMQPStreamConnection::class]();
 
 $channel = $connection->channel();
 
@@ -23,15 +19,7 @@ $channel->exchange_declare('messages_out', AMQPExchangeType::DIRECT, false, fals
 $channel->queue_declare('outgoing_message_queue',false, false, false , false);
 $channel->queue_bind('outgoing_message_queue', 'messages_out');
 
-$postgresHost = getenv('POSTGRES_HOST');
-$postgresDB = getenv('POSTGRES_DB');
-$postgresUsername = getenv('POSTGRES_USER');
-$postgresPassword = getenv('POSTGRES_PASSWORD');
-
-$dsn = "pgsql:host=$postgresHost;port=5432;dbname=$postgresDB;user=$postgresUsername;password=$postgresPassword";
-
-$pdo = new PDO($dsn);
-$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$pdo = $container[PDO::class]();
 
 $messageStorage = new class($pdo) {
     private PDO $pdo;

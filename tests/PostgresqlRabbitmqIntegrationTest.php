@@ -30,12 +30,9 @@ class PostgresqlRabbitmqIntegrationTest extends TestCase
 
     public static function setUpBeforeClass(): void
     {
-        static::$connection = new AMQPStreamConnection(
-            getenv('RABBITMQ_HOST'),
-            getenv('RABBITMQ_PORT'),
-            getenv('RABBITMQ_DEFAULT_USER'),
-            getenv('RABBITMQ_DEFAULT_PASS')
-        );
+        $container = require __DIR__ . '/../src/container.php';
+
+        static::$connection = $container[AMQPStreamConnection::class]();
 
         static::$channel = static::$connection->channel();
 
@@ -48,15 +45,7 @@ class PostgresqlRabbitmqIntegrationTest extends TestCase
         static::$channel->queue_declare('outgoing_message_queue',false, false, false , false);
         static::$channel->queue_bind('outgoing_message_queue', 'messages_out');
 
-        $postgresHost = getenv('POSTGRES_HOST');
-        $postgresDB = getenv('POSTGRES_DB');
-        $postgresUsername = getenv('POSTGRES_USER');
-        $postgresPassword = getenv('POSTGRES_PASSWORD');
-
-        $dsn = "pgsql:host=$postgresHost;port=5432;dbname=$postgresDB;user=$postgresUsername;password=$postgresPassword";
-
-        static::$pdo = new PDO($dsn);
-        static::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        static::$pdo = $container[PDO::class]();
 
         static::$pdo->exec("DROP TABLE IF EXISTS received_messages");
         static::$pdo->exec(
