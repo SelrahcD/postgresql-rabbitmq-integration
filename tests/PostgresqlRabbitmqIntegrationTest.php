@@ -54,7 +54,7 @@ class PostgresqlRabbitmqIntegrationTest extends TestCase
 
         static::$logger = new Logger(static::MESSAGE_LOG_FILE);
 
-        QueueExchangeManager::setupQueues(static::$channel);
+        $container[QueueExchangeManager::class]->setupQueues();
 
         FixtureManagers::setupFixtures(static::$pdo);
 

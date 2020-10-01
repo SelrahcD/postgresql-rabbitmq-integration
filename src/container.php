@@ -1,7 +1,9 @@
 <?php
 
+use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use SelrahcD\PostgresRabbitMq\Logger;
+use SelrahcD\PostgresRabbitMq\MessageBus;
 use SelrahcD\PostgresRabbitMq\MessageStorage;
 use SelrahcD\PostgresRabbitMq\QueueExchangeManager;
 use SelrahcD\PostgresRabbitMq\UserRepository;
@@ -32,5 +34,9 @@ $container[AMQPStreamConnection::class] = new AMQPStreamConnection(
 $container[UserRepository::class] = new UserRepository($container[PDO::class]);
 $container[Logger::class] = new Logger(getenv('MESSAGE_LOG_FILE'));
 $container[MessageStorage::class] = new MessageStorage($container[PDO::class]);
+$container[MessageStorage::class] = new MessageStorage($container[PDO::class]);
+$container[AMQPChannel::class] = $container[AMQPStreamConnection::class]->channel();
+$container[MessageBus::class] = new MessageBus($container[AMQPChannel::class]);
+$container[QueueExchangeManager::class] = new QueueExchangeManager($container[AMQPChannel::class]);
 
 return $container;

@@ -3,9 +3,11 @@
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use SelrahcD\PostgresRabbitMq\Logger;
+use SelrahcD\PostgresRabbitMq\MessageBus;
 use SelrahcD\PostgresRabbitMq\MessageStorage;
 use SelrahcD\PostgresRabbitMq\QueueExchangeManager;
 use SelrahcD\PostgresRabbitMq\UserRepository;
+use PhpAmqpLib\Channel\AMQPChannel;
 
 $container = require __DIR__ . '/container.php';
 
@@ -14,11 +16,11 @@ $pdo = $container[PDO::class];
 $messageStorage = $container[MessageStorage::class];
 $userRepository = $container[UserRepository::class];
 $logger = $container[Logger::class];
+$messageBus = $container[MessageBus::class];
+$channel = $container[AMQPChannel::class];
+$container[QueueExchangeManager::class]->setupQueues();
 
-$channel = $connection->channel();
-QueueExchangeManager::setupQueues($channel);
-
-$callback = function (AMQPMessage $message) use($logger, $messageStorage, $userRepository, $channel) {
+$callback = function (AMQPMessage $message) use($logger, $messageStorage, $userRepository, $messageBus) {
 
     echo '[x] Received ', $message->body, "\n";
 
@@ -29,13 +31,10 @@ $callback = function (AMQPMessage $message) use($logger, $messageStorage, $userR
     $messageStorage->storeMessageWasReceived($message);
     $userRepository->registerUser($username);
 
-
-    $event = new AMQPMessage(json_encode([
+    $messageBus->publish([
         'eventName' => 'UserRegistered',
         'username' => $username
-    ]));
-
-    $channel->basic_publish($event, 'messages_out');
+    ]);
 };
 
 $channel->basic_consume('incoming_message_queue', '', false, true, false, false, $callback);
