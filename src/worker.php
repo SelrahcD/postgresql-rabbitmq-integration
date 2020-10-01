@@ -49,6 +49,22 @@ $messageStorage = new class($pdo) {
     }
 };
 
+$userRepository = new class($pdo) {
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo)
+    {
+        $this->pdo = $pdo;
+    }
+
+    public function registerUser(string $username): void
+    {
+        $sth = $this->pdo->prepare('INSERT INTO users (username) VALUES (:username)');
+        $sth->bindParam('username', $username);
+        $sth->execute();
+    }
+};
+
 $logger = new class(getenv('MESSAGE_LOG_FILE')) {
 
     private string $messageLogFile;
@@ -66,12 +82,15 @@ $logger = new class(getenv('MESSAGE_LOG_FILE')) {
     }
 };
 
-$callback = function (AMQPMessage $message) use($logger, $messageStorage) {
+$callback = function (AMQPMessage $message) use($logger, $messageStorage, $userRepository) {
 
     echo '[x] Received ', $message->body, "\n";
 
+    $data = json_decode($message->body, true);
+
     $logger->logMessageReceived($message);
     $messageStorage->storeMessageWasReceived($message);
+    $userRepository->registerUser($data['username']);
 };
 
 $channel->basic_consume('incoming_message_queue', '', false, true, false, false, $callback);

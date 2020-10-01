@@ -26,6 +26,8 @@ class PostgresqlRabbitmqIntegrationTest extends TestCase
 
     private static UuidInterface $messageId;
 
+    private static string $username;
+
     public static function setUpBeforeClass(): void
     {
         static::$connection = new AMQPStreamConnection(
@@ -57,6 +59,12 @@ class PostgresqlRabbitmqIntegrationTest extends TestCase
                          message_id VARCHAR(255)
          )");
 
+        static::$pdo->exec("DROP TABLE IF EXISTS users");
+        static::$pdo->exec(
+            "CREATE TABLE IF NOT EXISTS users (
+                         username VARCHAR(255)
+         )");
+
         static::$process = new Process(
             ['php', './src/worker.php'],
             __DIR__ . '/..',
@@ -69,8 +77,10 @@ class PostgresqlRabbitmqIntegrationTest extends TestCase
 
         static::$messageId = Uuid::uuid4();
 
+        static::$username = 'Selrahcd_' . rand(0,1000);
+
         $messageBody = json_encode([
-            'username' => 'Charles'
+            'username' => static::$username,
         ]);
 
         $message = new AMQPMessage($messageBody, ['message_id' => static::$messageId]);
@@ -108,7 +118,7 @@ class PostgresqlRabbitmqIntegrationTest extends TestCase
          $messageReceived = false;
          while(!$messageReceived) {
 
-             if(time() - $start > 10) {
+             if(time() - $start > 5) {
                  $this->fail('Message wasn\'t received after 5 seconds.');
              }
 
@@ -133,7 +143,7 @@ class PostgresqlRabbitmqIntegrationTest extends TestCase
         $messageReceived = false;
         while(!$messageReceived) {
 
-            if(time() - $start > 10) {
+            if(time() - $start > 5) {
                 $this->fail('Message wasn\'t stored in postgresql after 5 seconds.');
             }
 
@@ -150,4 +160,31 @@ class PostgresqlRabbitmqIntegrationTest extends TestCase
 
         self::assertTrue($messageReceived);
     }
+    
+    /**
+     * @test
+     */
+     public function user_is_stored_in_users_table(): void
+     {
+         $start = time();
+         $messageReceived = false;
+         while(!$messageReceived) {
+
+             if(time() - $start > 5) {
+                 $this->fail('User wasn\'t stored in users table after 5 seconds');
+             }
+
+             $sth = static::$pdo->prepare("SELECT count(*) FROM users WHERE username = :username");
+             $sth->bindParam(':username', static::$username);
+             $sth->execute();
+
+             $count = $sth->fetchColumn();
+
+             if($count > 0) {
+                 $messageReceived = true;
+             }
+         }
+
+         self::assertTrue($messageReceived);
+     }
 }
