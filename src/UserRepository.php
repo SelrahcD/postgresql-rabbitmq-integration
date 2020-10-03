@@ -22,12 +22,21 @@ final class UserRepository
 
     public function isUsernameRegistered(string $username)
     {
-        $sth = $this->pdo->prepare("SELECT count(*) FROM users WHERE username = :username");
+        $sth = $this->pdo->prepare("SELECT count(id) FROM users WHERE username = :username");
         $sth->bindParam(':username', $username);
         $sth->execute();
 
         $count = $sth->fetchColumn();
 
         return $count > 0;
+    }
+
+    public function countOfUserRegisteredWith(string $username): int
+    {
+        $sth = $this->pdo->prepare("SELECT count(id) FROM users WHERE username = :username");
+        $sth->bindParam(':username', $username);
+        $sth->execute();
+
+        return $sth->fetchColumn();
     }
 }

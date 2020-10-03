@@ -14,17 +14,25 @@ class MessageStorage
         $this->pdo = $pdo;
     }
 
-    public function storeMessageWasReceived(AMQPMessage $message): void
+    public function recordMessageHasHandled(string $messageId): void
     {
-        $headers = $message->get_properties();
-        $messageId = $headers['message_id'];
-
         $sth = $this->pdo->prepare('INSERT INTO received_messages (message_id) VALUES (:message_id)');
         $sth->bindParam('message_id', $messageId);
         $sth->execute();
     }
 
-    public function wasMessageOfIdReceived(string $messageId)
+    public function messageWasMarkedHasHandled(string $messageId)
+    {
+        $sth = $this->pdo->prepare("SELECT count(*) FROM received_messages WHERE message_id = :message_id");
+        $sth->bindParam(':message_id', $messageId);
+        $sth->execute();
+
+        $count = $sth->fetchColumn();
+
+        return $count > 0;
+    }
+
+    public function isAlreadyHandled(string $messageId)
     {
         $sth = $this->pdo->prepare("SELECT count(*) FROM received_messages WHERE message_id = :message_id");
         $sth->bindParam(':message_id', $messageId);

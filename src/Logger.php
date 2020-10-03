@@ -13,10 +13,8 @@ class Logger
         $this->messageLogFile = $messageLogFile;
     }
 
-    public function logMessageReceived(AMQPMessage $message)
+    public function logMessageReceived(string $messageId)
     {
-        $headers = $message->get_properties();
-        $messageId = $headers['message_id'];
         file_put_contents($this->messageLogFile, $this->formatMessageReceivedLog($messageId), FILE_APPEND);
     }
 
@@ -33,6 +31,11 @@ class Logger
         return false;
     }
 
+    public function logMessageHandled(string $messageId)
+    {
+        file_put_contents($this->messageLogFile, $this->formatMessageHandledLog($messageId), FILE_APPEND);
+    }
+
     /**
      * @param string $messageId
      * @return string
@@ -40,5 +43,38 @@ class Logger
     private function formatMessageReceivedLog(string $messageId): string
     {
         return 'received:' . $messageId . PHP_EOL;
+    }
+
+    public function hasReceivedMessageReceivedLogForMessageIdAtLeast(string $messageId, int $minimumCalls)
+    {
+        $logFile = fopen($this->messageLogFile, 'r');
+
+        $count = 0;
+        while (($line = fgets($logFile)) !== false) {
+            if($line == $this->formatMessageReceivedLog($messageId)) {
+               $count++;
+            }
+        }
+
+        return $count >= $minimumCalls;
+    }
+
+    public function hasHandledMessageAtLeast(string $messageId, int $minimumCalls)
+    {
+        $logFile = fopen($this->messageLogFile, 'r');
+
+        $count = 0;
+        while (($line = fgets($logFile)) !== false) {
+            if($line == $this->formatMessageHandledLog($messageId)) {
+                $count++;
+            }
+        }
+
+        return $count >= $minimumCalls;
+    }
+
+    private function formatMessageHandledLog(string $messageId)
+    {
+        return 'handled:' . $messageId . PHP_EOL;
     }
 }

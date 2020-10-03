@@ -28,7 +28,7 @@ class EverythingOkTest extends PostgresqlRabbitmqIntegrationTest
     /**
      * @test
      */
-    public function message_is_marked_as_received_in_postgresql(): void
+    public function message_is_marked_as_handled_in_postgresql(): void
     {
         $start = time();
         $messageReceived = false;
@@ -38,7 +38,7 @@ class EverythingOkTest extends PostgresqlRabbitmqIntegrationTest
                 $this->fail('Message wasn\'t stored in postgresql after 5 seconds.');
             }
 
-            $messageReceived = static::$messageStorage->wasMessageOfIdReceived(static::$messageId->toString());
+            $messageReceived = static::$messageStorage->messageWasMarkedHasHandled(static::$messageId->toString());
         }
 
         self::assertTrue($messageReceived);

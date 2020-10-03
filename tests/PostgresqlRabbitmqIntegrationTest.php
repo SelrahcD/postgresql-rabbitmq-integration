@@ -41,6 +41,9 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
     {
         $container = require __DIR__ . '/../src/container.php';
 
+        @unlink(self::MESSAGE_LOG_FILE);
+        touch(self::MESSAGE_LOG_FILE);
+
         static::$connection = $container[AMQPStreamConnection::class];
 
         static::$channel = static::$connection->channel();
@@ -69,8 +72,13 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
 
         static::$messageId = Uuid::uuid4();
 
-        static::$username = 'Selrahcd_' . rand(0,1000);
+        static::$username = 'Selrahcd_' . rand(0, 1000);
 
+        self::sendMessage();
+    }
+
+    protected static function sendMessage(): void
+    {
         $messageBody = json_encode([
             'username' => static::$username,
         ]);
@@ -80,24 +88,13 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
         static::$channel->basic_publish($message, 'messages_in');
     }
 
-    protected function tearDown(): void
-    {
-        echo static::$process->getOutput();
-    }
-
     public static function tearDownAfterClass(): void
     {
         static::$channel->close();
         static::$connection->close();
         static::$process->stop();
+
+        echo static::$process->getOutput();
     }
-
-
-    protected function setUp(): void
-    {
-        @unlink(self::MESSAGE_LOG_FILE);
-        touch(self::MESSAGE_LOG_FILE);
-    }
-
 
 }

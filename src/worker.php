@@ -19,10 +19,16 @@ $container[QueueExchangeManager::class]->setupQueues();
 
 $callback = function (AMQPMessage $message) use($logger, $messageStorage, $messageHandler) {
 
-    $logger->logMessageReceived($message);
-    $messageStorage->storeMessageWasReceived($message);
+    $headers = $message->get_properties();
+    $messageId = $headers['message_id'];
+    $logger->logMessageReceived($messageId);
 
-    $messageHandler->handle($message);
+    if(!$messageStorage->isAlreadyHandled($messageId)) {
+        $messageHandler->handle($message);
+        $messageStorage->recordMessageHasHandled($messageId);
+    }
+
+    $logger->logMessageHandled($messageId);
 };
 
 $channel->basic_consume('incoming_message_queue', '', false, true, false, false, $callback);
