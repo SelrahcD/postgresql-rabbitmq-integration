@@ -27,11 +27,20 @@ $callback = function (AMQPMessage $message) use($logger, $messageStorage, $messa
     $logger->logMessageReceived($messageId);
 
     if(!$messageStorage->isAlreadyHandled($messageId)) {
-        $messageHandler->handle($message);
-        $messageStorage->recordMessageAsHandled($messageId);
+        try {
+            $messageHandler->handle($message);
+            $messageStorage->recordMessageAsHandled($messageId);
+        } catch (\Exception $exception) {
+            $message->nack(true);
+            $logger->logMessageNacked($messageId);
+            return;
+        }
+
     }
 
     $logger->logMessageHandled($messageId);
+
+    $message->ack();
     $logger->logMessageAcked($messageId);
 };
 

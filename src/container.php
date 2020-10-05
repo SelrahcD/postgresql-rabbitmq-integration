@@ -7,7 +7,9 @@ use SelrahcD\PostgresRabbitMq\MessageBus;
 use SelrahcD\PostgresRabbitMq\MessageHandler;
 use SelrahcD\PostgresRabbitMq\MessageStorage;
 use SelrahcD\PostgresRabbitMq\QueueExchangeManager;
+use SelrahcD\PostgresRabbitMq\UserRepository\GoodUserRepository;
 use SelrahcD\PostgresRabbitMq\UserRepository;
+use SelrahcD\PostgresRabbitMq\UserRepository\IntermittentFailureUserRepository;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
@@ -32,7 +34,11 @@ $container[AMQPStreamConnection::class] = new AMQPStreamConnection(
     getenv('RABBITMQ_DEFAULT_PASS')
 );
 
-$container[UserRepository::class] = new UserRepository($container[PDO::class]);
+$userRepositoryClass = getenv('USER_REPOSITORY') !== false ? getenv('USER_REPOSITORY'): GoodUserRepository::class;
+
+$container[GoodUserRepository::class] = new GoodUserRepository($container[PDO::class]);
+$container[IntermittentFailureUserRepository::class] = new IntermittentFailureUserRepository($container[GoodUserRepository::class]);
+$container[UserRepository::class] = $container[$userRepositoryClass];
 $container[Logger::class] = new Logger(getenv('MESSAGE_LOG_FILE'));
 $container[MessageStorage::class] = new MessageStorage($container[PDO::class]);
 $container[MessageStorage::class] = new MessageStorage($container[PDO::class]);

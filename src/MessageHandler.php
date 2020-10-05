@@ -3,7 +3,6 @@
 
 namespace SelrahcD\PostgresRabbitMq;
 
-
 use PhpAmqpLib\Message\AMQPMessage;
 
 class MessageHandler

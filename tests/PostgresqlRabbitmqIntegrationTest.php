@@ -10,7 +10,7 @@ use SelrahcD\PostgresRabbitMq\FixtureManagers;
 use SelrahcD\PostgresRabbitMq\Logger;
 use SelrahcD\PostgresRabbitMq\MessageStorage;
 use SelrahcD\PostgresRabbitMq\QueueExchangeManager;
-use SelrahcD\PostgresRabbitMq\UserRepository;
+use SelrahcD\PostgresRabbitMq\UserRepository\GoodUserRepository;
 use Symfony\Component\Process\Process;
 
 abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
@@ -33,7 +33,7 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
 
     protected MessageStorage $messageStorage;
 
-    protected UserRepository $userRepository;
+    protected GoodUserRepository $userRepository;
 
     protected Logger $logger;
 
@@ -52,7 +52,7 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
 
         $this->messageStorage = $container[MessageStorage::class];
 
-        $this->userRepository = $container[UserRepository::class];
+        $this->userRepository = $container[GoodUserRepository::class];
 
         $this->logger = new Logger(static::MESSAGE_LOG_FILE);
 
@@ -63,9 +63,9 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
         $this->process = new Process(
             ['php', './src/worker.php'],
             __DIR__ . '/..',
-            [
+            array_merge([
                 'MESSAGE_LOG_FILE' => self::MESSAGE_LOG_FILE
-            ]
+            ], $this->implementations())
         );
 
         $this->process->start();
@@ -184,5 +184,10 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
     protected function messagesToSend(): array
     {
         return [$this->buildCreateUserMessage()];
+    }
+
+    protected function implementations()
+    {
+        return [];
     }
 }

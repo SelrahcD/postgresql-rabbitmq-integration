@@ -83,6 +83,11 @@ class Logger
         file_put_contents($this->messageLogFile, $this->formatMessageAckedLog($messageId), FILE_APPEND);
     }
 
+    public function logMessageNacked(string $messageId)
+    {
+        file_put_contents($this->messageLogFile, $this->formatMessageNackedLog($messageId), FILE_APPEND);
+    }
+
     public function hasBeenAcked(string $messageId)
     {
         $logFile = fopen($this->messageLogFile, 'r');
@@ -99,5 +104,10 @@ class Logger
     private function formatMessageAckedLog(string $messageId)
     {
         return 'acked:' . $messageId . PHP_EOL;
+    }
+
+    private function formatMessageNackedLog(string $messageId)
+    {
+        return 'nacked:' . $messageId . PHP_EOL;
     }
 }
