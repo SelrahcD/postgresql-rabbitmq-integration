@@ -14,7 +14,7 @@ class MessageStorage
         $this->pdo = $pdo;
     }
 
-    public function recordMessageHasHandled(string $messageId): void
+    public function recordMessageAsHandled(string $messageId): void
     {
         $sth = $this->pdo->prepare('INSERT INTO received_messages (message_id) VALUES (:message_id)');
         $sth->bindParam('message_id', $messageId);
