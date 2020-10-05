@@ -15,52 +15,52 @@ use Symfony\Component\Process\Process;
 
 abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
 {
-    protected static AMQPChannel $channel;
+    protected AMQPChannel $channel;
 
-    protected static AMQPStreamConnection $connection;
+    protected AMQPStreamConnection $connection;
 
     protected const MESSAGE_LOG_FILE = __DIR__ . '/../var/logs/test/messages.log';
     /**
      * @var Process
      */
-    protected static Process $process;
+    protected Process $process;
 
-    protected static PDO $pdo;
+    protected PDO $pdo;
 
-    protected static UuidInterface $messageId;
+    protected UuidInterface $messageId;
 
-    protected static string $username;
+    protected string $username;
 
-    protected static MessageStorage $messageStorage;
+    protected MessageStorage $messageStorage;
 
-    protected static UserRepository $userRepository;
+    protected UserRepository $userRepository;
 
-    protected static Logger $logger;
+    protected Logger $logger;
 
-    public static function setUpBeforeClass(): void
+    protected function setUp(): void
     {
         $container = require __DIR__ . '/../src/container.php';
 
         @unlink(self::MESSAGE_LOG_FILE);
         touch(self::MESSAGE_LOG_FILE);
 
-        static::$connection = $container[AMQPStreamConnection::class];
+        $this->connection = $container[AMQPStreamConnection::class];
 
-        static::$channel = static::$connection->channel();
+        $this->channel = $this->connection->channel();
 
-        static::$pdo = $container[PDO::class];
+        $this->pdo = $container[PDO::class];
 
-        static::$messageStorage = $container[MessageStorage::class];
+        $this->messageStorage = $container[MessageStorage::class];
 
-        static::$userRepository = $container[UserRepository::class];
+        $this->userRepository = $container[UserRepository::class];
 
-        static::$logger = new Logger(static::MESSAGE_LOG_FILE);
+        $this->logger = new Logger(static::MESSAGE_LOG_FILE);
 
         $container[QueueExchangeManager::class]->setupQueues();
 
-        FixtureManagers::setupFixtures(static::$pdo);
+        FixtureManagers::setupFixtures($this->pdo);
 
-        static::$process = new Process(
+        $this->process = new Process(
             ['php', './src/worker.php'],
             __DIR__ . '/..',
             [
@@ -68,33 +68,121 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
             ]
         );
 
-        static::$process->start();
+        $this->process->start();
 
-        static::$messageId = Uuid::uuid4();
+        $this->messageId = Uuid::uuid4();
 
-        static::$username = 'Selrahcd_' . rand(0, 1000);
+        $this->username = 'Selrahcd_' . rand(0, 1000);
 
-        self::sendMessage();
+        $messages = $this->messagesToSend();
+
+        foreach ($messages as $message) {
+            $this->channel->basic_publish($message, 'messages_in');
+        }
+
+        $start = time();
+        $messageWasAcked = false;
+        $messagesWereHandled = false;
+        while (!$messageWasAcked && !$messagesWereHandled) {
+
+            if (time() - $start > 5) {
+                $this->fail('Message wasn\'t acked after 5 seconds');
+            }
+
+            $messageWasAcked = $this->logger->hasBeenAcked($this->messageId->toString());
+            $messagesWereHandled = $this->logger->hasHandledMessageAtLeast($this->messageId->toString(), count($messages));
+        }
     }
 
-    protected static function sendMessage(): void
+    protected function tearDown(): void
+    {
+        $this->channel->close();
+        $this->connection->close();
+        $this->process->stop();
+
+        echo $this->process->getOutput();
+    }
+
+    /**
+     * @test
+     */
+    public function user_is_stored_in_users_table_only_once(): void
+    {
+        self::assertEquals(1, $this->userRepository->countOfUserRegisteredWith($this->username));
+    }
+
+    /**
+     * @test
+     */
+    public function all_dispatched_messages_have_the_same_message_id(): void
+    {
+        $receivedMessageIds = [];
+
+        $callback = function (AMQPMessage $message) use (&$receivedMessageIds) {
+
+            $headers = $message->get_properties();
+            $messageId = $headers['message_id'];
+
+            $receivedMessageIds[] = $messageId;
+        };
+
+        $this->channel->basic_consume('outgoing_message_queue', '', false, true, false, false, $callback);
+
+        $start = time();
+        $keepWaiting = true;
+        while ($this->channel->is_consuming() && $keepWaiting && count($receivedMessageIds) < 2) {
+            $this->channel->wait(null, true);
+            $keepWaiting = time() - $start < 2;
+        }
+
+
+        $uniqueReceivedMessageIds = array_unique($receivedMessageIds);
+
+        self::assertCount(1, $uniqueReceivedMessageIds);
+    }
+
+    /**
+     * @test
+     */
+    public function userRegistered_event_is_dispatched(): void
+    {
+        $receivedMessages = [];
+
+        $callback = function (AMQPMessage $message) use (&$receivedMessages) {
+            $receivedMessages[] = $message->body;
+        };
+
+        $this->channel->basic_consume('outgoing_message_queue', '', false, true, false, false, $callback);
+
+        $start = time();
+        $messageReceived = false;
+        $expectedMessage = json_encode(['eventName' => 'UserRegistered', 'username' => $this->username]);
+        while (!$messageReceived) {
+
+            $this->channel->wait(null, true);
+            if (time() - $start > 5) {
+                $this->fail('UserRegistered event wasn\'t received after 5 seconds');
+            }
+            foreach ($receivedMessages as $receivedMessage) {
+                if ($receivedMessage === $expectedMessage) {
+                    $messageReceived = true;
+                }
+            }
+        }
+        self::assertTrue($messageReceived);
+    }
+
+    protected function buildCreateUserMessage()
     {
         $messageBody = json_encode([
-            'username' => static::$username,
+            'username' => $this->username,
         ]);
 
-        $message = new AMQPMessage($messageBody, ['message_id' => static::$messageId]);
-
-        static::$channel->basic_publish($message, 'messages_in');
+        return new AMQPMessage($messageBody, ['message_id' => $this->messageId]);
     }
 
-    public static function tearDownAfterClass(): void
+    protected function messagesToSend(): array
     {
-        static::$channel->close();
-        static::$connection->close();
-        static::$process->stop();
-
-        echo static::$process->getOutput();
+        return [$this->buildCreateUserMessage()];
     }
-
 }

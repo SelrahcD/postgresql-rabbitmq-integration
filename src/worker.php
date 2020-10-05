@@ -29,6 +29,7 @@ $callback = function (AMQPMessage $message) use($logger, $messageStorage, $messa
     }
 
     $logger->logMessageHandled($messageId);
+    $logger->logMessageAcked($messageId);
 };
 
 $channel->basic_consume('incoming_message_queue', '', false, true, false, false, $callback);

@@ -77,4 +77,27 @@ class Logger
     {
         return 'handled:' . $messageId . PHP_EOL;
     }
+
+    public function logMessageAcked(string $messageId)
+    {
+        file_put_contents($this->messageLogFile, $this->formatMessageAckedLog($messageId), FILE_APPEND);
+    }
+
+    public function hasBeenAcked(string $messageId)
+    {
+        $logFile = fopen($this->messageLogFile, 'r');
+
+        while (($line = fgets($logFile)) !== false) {
+            if($line == $this->formatMessageAckedLog($messageId)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function formatMessageAckedLog(string $messageId)
+    {
+        return 'acked:' . $messageId . PHP_EOL;
+    }
 }
