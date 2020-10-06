@@ -14,14 +14,14 @@ class QueueExchangeManager {
         $this->channel = $channel;
     }
 
-    public function setupQueues(string $outQueueName = 'outgoing_message_queue')
+    public function setupQueues()
     {
-        $this->channel->exchange_declare('messages_in', AMQPExchangeType::DIRECT);
-        $this->channel->queue_declare('incoming_message_queue');
+        $this->channel->exchange_declare('messages_in', AMQPExchangeType::DIRECT,false, false, false);
+        $this->channel->queue_declare('incoming_message_queue', false, false, false, false);
         $this->channel->queue_bind('incoming_message_queue', 'messages_in');
 
-        $this->channel->exchange_declare('messages_out', AMQPExchangeType::DIRECT);
-        $this->channel->queue_declare($outQueueName);
-        $this->channel->queue_bind($outQueueName, 'messages_out');
+        $this->channel->exchange_declare('messages_out', AMQPExchangeType::DIRECT, false, false, false);
+        $this->channel->queue_declare('outgoing_message_queue', false, false, false, false);
+        $this->channel->queue_bind('outgoing_message_queue', 'messages_out');
     }
 }

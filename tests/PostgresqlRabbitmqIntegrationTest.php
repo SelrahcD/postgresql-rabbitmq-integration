@@ -37,8 +37,6 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
 
     protected Logger $logger;
 
-    private string $outQueue;
-
     protected function setUp(): void
     {
         $container = require __DIR__ . '/../src/container.php';
@@ -58,9 +56,9 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
 
         $this->logger = new Logger(static::MESSAGE_LOG_FILE);
 
-        $this->outQueue = Uuid::uuid4()->toString();
+        $container[QueueExchangeManager::class]->setupQueues('outgoing_message_queue');
 
-        $container[QueueExchangeManager::class]->setupQueues($this->outQueue);
+        $this->channel->queue_purge('outgoing_message_queue');
 
         FixtureManagers::setupFixtures($this->pdo);
 
@@ -129,7 +127,7 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
             $receivedMessageIds[] = $messageId;
         };
 
-        $this->channel->basic_consume($this->outQueue, '', false, true, false, false, $callback);
+        $this->channel->basic_consume('outgoing_message_queue', '', false, true, false, false, $callback);
 
         $start = time();
         $keepWaiting = true;
@@ -154,7 +152,7 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
             $receivedMessages[] = $message->body;
         };
 
-        $this->channel->basic_consume($this->outQueue, '', false, true, false, false, $callback);
+        $this->channel->basic_consume('outgoing_message_queue', '', false, true, false, false, $callback);
 
         $start = time();
         $messageReceived = false;
