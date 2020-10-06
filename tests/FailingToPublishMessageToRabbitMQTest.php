@@ -1,14 +1,14 @@
 <?php
 
 
-use SelrahcD\PostgresRabbitMq\AmqpMessageBus\IntermittentRabbitMQMessageBus;
+use SelrahcD\PostgresRabbitMq\AmqpMessagePublisher\IntermittentAmqpMessagePublisher;
 
 class FailingToPublishMessageToRabbitMQTest extends PostgresqlRabbitmqIntegrationTest
 {
     protected function implementations()
     {
         return [
-            'RABBITMQ_MESSAGE_BUS' => IntermittentRabbitMQMessageBus::class,
+            'AMQP_MESSAGE_PUBLISHER' => IntermittentAmqpMessagePublisher::class,
         ];
     }
 

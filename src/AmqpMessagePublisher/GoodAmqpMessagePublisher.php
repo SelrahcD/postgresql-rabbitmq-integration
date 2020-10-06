@@ -1,14 +1,12 @@
 <?php
 
-
-namespace SelrahcD\PostgresRabbitMq\AmqpMessageBus;
-
+namespace SelrahcD\PostgresRabbitMq\AmqpMessagePublisher;
 
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
-use SelrahcD\PostgresRabbitMq\MessageBus;
+use SelrahcD\PostgresRabbitMq\AmqpMessagePublisher;
 
-class GoodAmqpMessageBus implements MessageBus
+class GoodAmqpMessagePublisher implements AmqpMessagePublisher
 {
     /**
      * @var AMQPChannel
@@ -19,10 +17,9 @@ class GoodAmqpMessageBus implements MessageBus
     {
         $this->channel = $channel;
     }
-
-    public function publish(array $message) : void
+    public function publish(string $message, string $messageId) : void
     {
-        $event = new AMQPMessage(json_encode($message));
+        $event = new AMQPMessage($message, ['message_id' => $messageId]);
 
         $this->channel->basic_publish($event, 'messages_out');
     }

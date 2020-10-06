@@ -23,8 +23,9 @@ $pdo = $container[PDO::class];
 $channel = $container[AMQPChannel::class];
 $messageHandler = $container[MessageHandler::class];
 $container[QueueExchangeManager::class]->setupQueues();
+$outboxMessageBus = $container[\SelrahcD\PostgresRabbitMq\OutboxMessageBus::class];
 
-$callback = function (AMQPMessage $message) use($logger, $messageStorage, $messageHandler, $pdo) {
+$callback = function (AMQPMessage $message) use($logger, $messageStorage, $messageHandler, $pdo, $outboxMessageBus) {
 
     $headers = $message->get_properties();
     $messageId = $headers['message_id'];
@@ -50,6 +51,16 @@ $callback = function (AMQPMessage $message) use($logger, $messageStorage, $messa
     }
 
     if($pdo->commit() == false) {
+        $message->nack(true);
+        $logger->logMessageNacked($messageId);
+        return;
+    }
+
+
+    try {
+        $outboxMessageBus->sendMessages();
+    } catch (Exception $e) {
+        echo $e->getMessage();
         $message->nack(true);
         $logger->logMessageNacked($messageId);
         return;
