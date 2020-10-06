@@ -34,35 +34,32 @@ $callback = function (AMQPMessage $message) use($logger, $messageStorage, $messa
     try {
         $pdo->beginTransaction();
 
-        if(!$messageStorage->isAlreadyHandled($messageId)) {
+        try {
+            if (!$messageStorage->isAlreadyHandled($messageId)) {
                 $messageHandler->handle($message);
                 $messageStorage->recordMessageAsHandled($messageId);
+            }
+        } catch (\Exception $exception) {
+
+            if($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+
+            throw $exception;
         }
+
+        if($pdo->commit() == false) {
+            $message->nack(true);
+            $logger->logMessageNacked($messageId);
+            return;
+        }
+
+
+        $outboxMessageBus->sendMessages();
+
     } catch (\Exception $exception) {
         echo $exception->getMessage();
-
-        if($pdo->inTransaction()) {
-            $pdo->rollBack();
-        }
-
         $message->nack(true);
-        $logger->logMessageNacked($messageId);
-        return;
-    }
-
-    if($pdo->commit() == false) {
-        $message->nack(true);
-        $logger->logMessageNacked($messageId);
-        return;
-    }
-
-
-    try {
-        $outboxMessageBus->sendMessages();
-    } catch (Exception $e) {
-        echo $e->getMessage();
-        $message->nack(true);
-        $logger->logMessageNacked($messageId);
         return;
     }
 

@@ -29,12 +29,12 @@ class OutboxMessageBus implements MessageBus
 
     public function sendMessages()
     {
-        $sth = $this->pdo->prepare('SELECT message_id, body, message_id FROM messages_outbox WHERE sent = 0');
+        $sth = $this->pdo->prepare('SELECT message_id, body, message_id FROM messages_outbox');
         $sth->execute();
 
         $unsentMessages = $sth->fetchAll(PDO::FETCH_ASSOC | PDO::FETCH_UNIQUE);
 
-        $sth = $this->pdo->prepare('UPDATE messages_outbox SET sent = 1 WHERE message_id = :message_id');
+        $sth = $this->pdo->prepare('DELETE FROM messages_outbox WHERE message_id = :message_id');
         foreach ($unsentMessages as $unsentMessage) {
             $this->messagePublisher->publish($unsentMessage['body'], $unsentMessage['message_id']);
             $sth->bindParam(':message_id', $unsentMessage['message_id']);
