@@ -27,7 +27,7 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
 
     protected PDO $pdo;
 
-    protected UuidInterface $messageId;
+    protected string $messageId;
 
     protected string $username;
 
@@ -72,7 +72,7 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
 
         $this->process->start();
 
-        $this->messageId = Uuid::uuid4();
+        $this->messageId = Uuid::uuid4()->toString();
 
         $this->username = 'Selrahcd_' . rand(0, 1000);
 
@@ -91,8 +91,8 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
                 $this->fail('Message wasn\'t acked after 5 seconds');
             }
 
-            $messageWasAcked = $this->logger->hasBeenAcked($this->messageId->toString());
-            $messagesWereHandled = $this->logger->hasHandledMessageAtLeast($this->messageId->toString(), count($messages));
+            $messageWasAcked = $this->logger->hasBeenAcked($this->messageId);
+            $messagesWereHandled = $this->logger->hasHandledMessageAtLeast($this->messageId, count($messages));
         }
     }
 

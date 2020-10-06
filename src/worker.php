@@ -5,6 +5,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 use SelrahcD\PostgresRabbitMq\Logger;
 use SelrahcD\PostgresRabbitMq\MessageHandler;
 use SelrahcD\PostgresRabbitMq\MessageStorage;
+use SelrahcD\PostgresRabbitMq\OutboxMessageBus;
 use SelrahcD\PostgresRabbitMq\QueueExchangeManager;
 use PhpAmqpLib\Channel\AMQPChannel;
 
@@ -23,7 +24,7 @@ $pdo = $container[PDO::class];
 $channel = $container[AMQPChannel::class];
 $messageHandler = $container[MessageHandler::class];
 $container[QueueExchangeManager::class]->setupQueues();
-$outboxMessageBus = $container[\SelrahcD\PostgresRabbitMq\OutboxMessageBus::class];
+$outboxMessageBus = $container[OutboxMessageBus::class];
 
 $callback = function (AMQPMessage $message) use($logger, $messageStorage, $messageHandler, $pdo, $outboxMessageBus) {
 
@@ -49,9 +50,7 @@ $callback = function (AMQPMessage $message) use($logger, $messageStorage, $messa
         }
 
         if($pdo->commit() == false) {
-            $message->nack(true);
-            $logger->logMessageNacked($messageId);
-            return;
+            throw new Exception('Couldn\'t commit');
         }
 
 
@@ -59,6 +58,7 @@ $callback = function (AMQPMessage $message) use($logger, $messageStorage, $messa
 
     } catch (\Exception $exception) {
         echo $exception->getMessage();
+        $logger->logMessageNacked($messageId);
         $message->nack(true);
         return;
     }

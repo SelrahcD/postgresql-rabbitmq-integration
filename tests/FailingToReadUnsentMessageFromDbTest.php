@@ -1,11 +1,13 @@
 <?php
 
-class FailingToCommitTransactionTest extends PostgresqlRabbitmqIntegrationTest
+
+class FailingToReadUnsentMessageFromDbTest extends PostgresqlRabbitmqIntegrationTest
 {
     protected function implementations()
     {
         return [
-            'PDO_COMMIT_TRANSACTION_FAILURE' => 1,
+            'OUTBOX_DB_WRITER' => IntermittentOutboxDbWriter::class,
+            'OUTBOX_DB_WRITER_READ_FAILURE' => 1
         ];
     }
 
@@ -15,7 +17,7 @@ class FailingToCommitTransactionTest extends PostgresqlRabbitmqIntegrationTest
     public function logs_error(): void
     {
         $expectedLogs = <<<EOL
-Couldn't commit
+Couldn't read outbox unsent message from DB
 EOL;
 
         self::assertEquals($expectedLogs, $this->process->getOutput());
