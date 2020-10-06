@@ -1,5 +1,6 @@
 <?php
 
+use SelrahcD\PostgresRabbitMq\LogMessage;
 use SelrahcD\PostgresRabbitMq\UserRepository\FailingUserRepository;
 
 class FailingUserRepositoryTest extends PostgresqlRabbitmqIntegrationTest
@@ -9,6 +10,24 @@ class FailingUserRepositoryTest extends PostgresqlRabbitmqIntegrationTest
         return [
             'USER_REPOSITORY_REGISTRATION_FAILURE' => 1
         ];
+    }
+
+    /**
+     * @test
+     */
+    public function check_logs(): void
+    {
+        self::assertEquals(
+            (string)(new LogMessage())
+                ->received($this->messageId)
+                ->error('Couldn\'t register user in DB')
+                ->nacked($this->messageId)
+                ->received($this->messageId)
+                ->handled($this->messageId)
+                ->acked($this->messageId)
+            ,
+            $this->logger->allLogs()
+        );
     }
 
     /**

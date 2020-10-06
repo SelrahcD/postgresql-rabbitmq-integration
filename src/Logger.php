@@ -2,8 +2,6 @@
 
 namespace SelrahcD\PostgresRabbitMq;
 
-use PhpAmqpLib\Message\AMQPMessage;
-
 class Logger
 {
     private string $messageLogFile;
@@ -15,15 +13,45 @@ class Logger
 
     public function logMessageReceived(string $messageId)
     {
-        file_put_contents($this->messageLogFile, $this->formatMessageReceivedLog($messageId), FILE_APPEND);
+        $log = (string) (new LogMessage())->received($messageId);
+
+        file_put_contents($this->messageLogFile, $log, FILE_APPEND);
     }
 
-    public function hasReceivedMessageReceivedLogForMessageId(string $messageId)
+    public function logMessageHandled(string $messageId)
     {
+        $log = (string) (new LogMessage())->handled($messageId);
+
+        file_put_contents($this->messageLogFile, $log, FILE_APPEND);
+    }
+
+    public function logMessageAcked(string $messageId): void
+    {
+        $log = (string) (new LogMessage())->acked($messageId);
+
+        file_put_contents($this->messageLogFile, $log, FILE_APPEND);
+    }
+
+    public function logMessageNacked(string $messageId): void
+    {
+        $log = (string) (new LogMessage())->nacked($messageId);
+
+        file_put_contents($this->messageLogFile, $log, FILE_APPEND);
+    }
+
+    public function logError(string $errorMessage): void
+    {
+        $log = (string) (new LogMessage())->error($errorMessage);
+        file_put_contents($this->messageLogFile, $log, FILE_APPEND);
+    }
+
+    public function hasBeenAcked(string $messageId)
+    {
+        $searchedLog = (string) (new LogMessage())->acked($messageId);
         $logFile = fopen($this->messageLogFile, 'r');
 
         while (($line = fgets($logFile)) !== false) {
-            if($line == $this->formatMessageReceivedLog($messageId)) {
+            if($line == $searchedLog) {
                 return true;
             }
         }
@@ -31,28 +59,15 @@ class Logger
         return false;
     }
 
-    public function logMessageHandled(string $messageId)
-    {
-        file_put_contents($this->messageLogFile, $this->formatMessageHandledLog($messageId), FILE_APPEND);
-    }
-
-    /**
-     * @param string $messageId
-     * @return string
-     */
-    private function formatMessageReceivedLog(string $messageId): string
-    {
-        return 'received:' . $messageId . PHP_EOL;
-    }
-
     public function hasReceivedMessageReceivedLogForMessageIdAtLeast(string $messageId, int $minimumCalls)
     {
+        $searchedLog = (string) (new LogMessage())->received($messageId);
         $logFile = fopen($this->messageLogFile, 'r');
 
         $count = 0;
         while (($line = fgets($logFile)) !== false) {
-            if($line == $this->formatMessageReceivedLog($messageId)) {
-               $count++;
+            if($line == $searchedLog) {
+                $count++;
             }
         }
 
@@ -61,11 +76,12 @@ class Logger
 
     public function hasHandledMessageAtLeast(string $messageId, int $minimumCalls)
     {
+        $searchedLog = (string) (new LogMessage())->handled($messageId);
         $logFile = fopen($this->messageLogFile, 'r');
 
         $count = 0;
         while (($line = fgets($logFile)) !== false) {
-            if($line == $this->formatMessageHandledLog($messageId)) {
+            if($line == $searchedLog) {
                 $count++;
             }
         }
@@ -73,27 +89,13 @@ class Logger
         return $count >= $minimumCalls;
     }
 
-    private function formatMessageHandledLog(string $messageId)
+    public function hasReceivedMessageReceivedLogForMessageId(string $messageId)
     {
-        return 'handled:' . $messageId . PHP_EOL;
-    }
-
-    public function logMessageAcked(string $messageId)
-    {
-        file_put_contents($this->messageLogFile, $this->formatMessageAckedLog($messageId), FILE_APPEND);
-    }
-
-    public function logMessageNacked(string $messageId)
-    {
-        file_put_contents($this->messageLogFile, $this->formatMessageNackedLog($messageId), FILE_APPEND);
-    }
-
-    public function hasBeenAcked(string $messageId)
-    {
+        $searchedLog = (string) (new LogMessage())->received($messageId);
         $logFile = fopen($this->messageLogFile, 'r');
 
         while (($line = fgets($logFile)) !== false) {
-            if($line == $this->formatMessageAckedLog($messageId)) {
+            if($line == $searchedLog) {
                 return true;
             }
         }
@@ -101,13 +103,8 @@ class Logger
         return false;
     }
 
-    private function formatMessageAckedLog(string $messageId)
+    public function allLogs(): string
     {
-        return 'acked:' . $messageId . PHP_EOL;
-    }
-
-    private function formatMessageNackedLog(string $messageId)
-    {
-        return 'nacked:' . $messageId . PHP_EOL;
+        return file_get_contents($this->messageLogFile, 'r');
     }
 }

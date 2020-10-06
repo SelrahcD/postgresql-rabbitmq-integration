@@ -1,6 +1,7 @@
 <?php
 
 
+use SelrahcD\PostgresRabbitMq\LogMessage;
 use SelrahcD\PostgresRabbitMq\OutboxDbWriter\FailingOutboxDbWriter;
 
 class FailingToReadUnsentMessageFromDbTest extends PostgresqlRabbitmqIntegrationTest
@@ -11,6 +12,24 @@ class FailingToReadUnsentMessageFromDbTest extends PostgresqlRabbitmqIntegration
             'OUTBOX_DB_WRITER' => FailingOutboxDbWriter::class,
             'OUTBOX_DB_WRITER_READ_FAILURE' => 1
         ];
+    }
+
+    /**
+     * @test
+     */
+    public function check_logs(): void
+    {
+        self::assertEquals(
+            (string)(new LogMessage())
+                ->received($this->messageId)
+                ->error('Couldn\'t read outbox unsent message from DB')
+                ->nacked($this->messageId)
+                ->received($this->messageId)
+                ->handled($this->messageId)
+                ->acked($this->messageId)
+            ,
+            $this->logger->allLogs()
+        );
     }
 
     /**

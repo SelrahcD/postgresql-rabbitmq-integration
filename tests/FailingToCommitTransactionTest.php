@@ -1,5 +1,7 @@
 <?php
 
+use SelrahcD\PostgresRabbitMq\LogMessage;
+
 class FailingToCommitTransactionTest extends PostgresqlRabbitmqIntegrationTest
 {
     protected function implementations()
@@ -7,6 +9,24 @@ class FailingToCommitTransactionTest extends PostgresqlRabbitmqIntegrationTest
         return [
             'PDO_COMMIT_TRANSACTION_FAILURE' => 1,
         ];
+    }
+
+    /**
+     * @test
+     */
+    public function check_logs(): void
+    {
+        self::assertEquals(
+            (string)(new LogMessage())
+                ->received($this->messageId)
+                ->error('Couldn\'t commit')
+                ->nacked($this->messageId)
+                ->received($this->messageId)
+                ->handled($this->messageId)
+                ->acked($this->messageId)
+            ,
+            $this->logger->allLogs()
+        );
     }
 
     /**

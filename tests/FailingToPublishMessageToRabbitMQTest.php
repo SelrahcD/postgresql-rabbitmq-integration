@@ -2,6 +2,7 @@
 
 
 use SelrahcD\PostgresRabbitMq\AmqpMessagePublisher\FailingAmqpMessagePublisher;
+use SelrahcD\PostgresRabbitMq\LogMessage;
 
 class FailingToPublishMessageToRabbitMQTest extends PostgresqlRabbitmqIntegrationTest
 {
@@ -13,6 +14,23 @@ class FailingToPublishMessageToRabbitMQTest extends PostgresqlRabbitmqIntegratio
         ];
     }
 
+    /**
+     * @test
+     */
+    public function check_logs(): void
+    {
+        self::assertEquals(
+            (string)(new LogMessage())
+                ->received($this->messageId)
+                ->error('Couldn\'t publish to rabbitMQ')
+                ->nacked($this->messageId)
+                ->received($this->messageId)
+                ->handled($this->messageId)
+                ->acked($this->messageId)
+            ,
+            $this->logger->allLogs()
+        );
+    }
     /**
      * @test
      */
