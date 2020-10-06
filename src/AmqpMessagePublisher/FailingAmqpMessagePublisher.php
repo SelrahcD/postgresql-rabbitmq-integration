@@ -2,9 +2,9 @@
 
 namespace SelrahcD\PostgresRabbitMq\AmqpMessagePublisher;
 
-use SelrahcD\PostgresRabbitMq\AmqpMessagePublisher;
+use SelrahcD\PostgresRabbitMq\AmqpMessagePublisher\AmqpMessagePublisher;
 
-class IntermittentAmqpMessagePublisher implements AmqpMessagePublisher
+class FailingAmqpMessagePublisher implements AmqpMessagePublisher
 {
     private GoodAmqpMessagePublisher $messagePublisher;
 

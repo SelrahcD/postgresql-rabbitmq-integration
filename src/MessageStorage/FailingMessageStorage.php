@@ -4,9 +4,9 @@
 namespace SelrahcD\PostgresRabbitMq\MessageStorage;
 
 
-use SelrahcD\PostgresRabbitMq\MessageStorage;
+use SelrahcD\PostgresRabbitMq\MessageStorage\MessageStorage;
 
-class IntermittentFailureMessageStorage implements MessageStorage
+class FailingMessageStorage implements MessageStorage
 {
     /**
      * @var GoodMessageStorage

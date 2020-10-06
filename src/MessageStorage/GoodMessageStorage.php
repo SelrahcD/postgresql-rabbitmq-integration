@@ -4,7 +4,7 @@ namespace SelrahcD\PostgresRabbitMq\MessageStorage;
 
 use PDO;
 use PhpAmqpLib\Message\AMQPMessage;
-use SelrahcD\PostgresRabbitMq\MessageStorage;
+use SelrahcD\PostgresRabbitMq\MessageStorage\MessageStorage;
 
 class GoodMessageStorage implements MessageStorage
 {

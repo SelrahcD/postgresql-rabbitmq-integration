@@ -4,7 +4,7 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use SelrahcD\PostgresRabbitMq\Logger;
 use SelrahcD\PostgresRabbitMq\MessageHandler;
-use SelrahcD\PostgresRabbitMq\MessageStorage;
+use SelrahcD\PostgresRabbitMq\MessageStorage\MessageStorage;
 use SelrahcD\PostgresRabbitMq\OutboxMessageBus;
 use SelrahcD\PostgresRabbitMq\QueueExchangeManager;
 use PhpAmqpLib\Channel\AMQPChannel;

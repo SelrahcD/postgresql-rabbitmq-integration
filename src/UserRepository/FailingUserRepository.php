@@ -4,9 +4,9 @@
 namespace SelrahcD\PostgresRabbitMq\UserRepository;
 
 
-use SelrahcD\PostgresRabbitMq\UserRepository;
+use SelrahcD\PostgresRabbitMq\UserRepository\UserRepository;
 
-class IntermittentFailureUserRepository implements UserRepository
+class FailingUserRepository implements UserRepository
 {
     private GoodUserRepository $userRepository;
 

@@ -1,6 +1,6 @@
 <?php
 
-use SelrahcD\PostgresRabbitMq\UserRepository\IntermittentFailureUserRepository;
+use SelrahcD\PostgresRabbitMq\UserRepository\FailingUserRepository;
 
 class FailingUserRepositoryTest extends PostgresqlRabbitmqIntegrationTest
 {

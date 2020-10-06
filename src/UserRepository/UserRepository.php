@@ -1,6 +1,6 @@
 <?php
 
-namespace SelrahcD\PostgresRabbitMq;
+namespace SelrahcD\PostgresRabbitMq\UserRepository;
 
 interface UserRepository
 {

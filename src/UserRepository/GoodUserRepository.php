@@ -3,7 +3,7 @@
 namespace SelrahcD\PostgresRabbitMq\UserRepository;
 
 use PDO;
-use SelrahcD\PostgresRabbitMq\UserRepository;
+use SelrahcD\PostgresRabbitMq\UserRepository\UserRepository;
 
 final class GoodUserRepository implements UserRepository
 {

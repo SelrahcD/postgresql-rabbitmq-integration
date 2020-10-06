@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
 use SelrahcD\PostgresRabbitMq\FixtureManagers;
 use SelrahcD\PostgresRabbitMq\Logger;
-use SelrahcD\PostgresRabbitMq\MessageStorage;
+use SelrahcD\PostgresRabbitMq\MessageStorage\MessageStorage;
 use SelrahcD\PostgresRabbitMq\QueueExchangeManager;
 use SelrahcD\PostgresRabbitMq\UserRepository\GoodUserRepository;
 use Symfony\Component\Process\Process;
@@ -29,7 +29,7 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
     protected string $messageId;
 
     protected string $username;
-    
+
     protected GoodUserRepository $userRepository;
 
     protected Logger $logger;

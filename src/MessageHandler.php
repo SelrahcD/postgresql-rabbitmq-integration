@@ -3,6 +3,7 @@
 namespace SelrahcD\PostgresRabbitMq;
 
 use PhpAmqpLib\Message\AMQPMessage;
+use SelrahcD\PostgresRabbitMq\UserRepository\UserRepository;
 
 class MessageHandler
 {

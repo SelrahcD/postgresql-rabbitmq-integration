@@ -1,10 +1,13 @@
 <?php
 
 
-use SelrahcD\PostgresRabbitMq\GoodOutboxBusDbWriter;
-use SelrahcD\PostgresRabbitMq\OutboxMessageBusDbWriter;
+namespace SelrahcD\PostgresRabbitMq\OutboxDbWriter;
 
-class IntermittentOutboxDbWriter implements OutboxMessageBusDbWriter
+use Exception;
+use SelrahcD\PostgresRabbitMq\OutboxDbWriter\GoodOutboxBusDbWriter;
+use SelrahcD\PostgresRabbitMq\OutboxDbWriter\OutboxDbWriter;
+
+class FailingOutboxDbWriter implements OutboxDbWriter
 {
     /**
      * @var GoodOutboxBusDbWriter
@@ -15,7 +18,11 @@ class IntermittentOutboxDbWriter implements OutboxMessageBusDbWriter
     private int $outboxDbWriterReadFailureCount;
     private int $outboxDbWriterDeleteFailureCount;
 
-    public function __construct(GoodOutboxBusDbWriter $outboxBusDbWriter, int $outboxDbWriterInsertFailureCount, int $outboxDbWriterReadFailureCount, int $outboxDbWriterDeleteFailureCount)
+    public function __construct(
+        GoodOutboxBusDbWriter $outboxBusDbWriter,
+        int $outboxDbWriterInsertFailureCount,
+        int $outboxDbWriterReadFailureCount,
+        int $outboxDbWriterDeleteFailureCount)
     {
         $this->outboxBusDbWriter = $outboxBusDbWriter;
         $this->outboxDbWriterInsertFailureCount = $outboxDbWriterInsertFailureCount;
@@ -25,7 +32,7 @@ class IntermittentOutboxDbWriter implements OutboxMessageBusDbWriter
 
     public function insert(string $messageId, string $body): void
     {
-        if($this->outboxDbWriterInsertFailureCount !== 0) {
+        if ($this->outboxDbWriterInsertFailureCount !== 0) {
             $this->outboxDbWriterInsertFailureCount--;
             throw new Exception('Couldn\'t insert outbox message in DB');
         }
@@ -35,7 +42,7 @@ class IntermittentOutboxDbWriter implements OutboxMessageBusDbWriter
 
     public function unsentMessages(): array
     {
-        if($this->outboxDbWriterReadFailureCount !== 0) {
+        if ($this->outboxDbWriterReadFailureCount !== 0) {
             $this->outboxDbWriterReadFailureCount--;
             throw new Exception('Couldn\'t read outbox unsent message from DB');
         }
@@ -45,7 +52,7 @@ class IntermittentOutboxDbWriter implements OutboxMessageBusDbWriter
 
     public function delete(string $messageId): void
     {
-        if($this->outboxDbWriterDeleteFailureCount !== 0) {
+        if ($this->outboxDbWriterDeleteFailureCount !== 0) {
             $this->outboxDbWriterDeleteFailureCount--;
             throw new Exception('Couldn\'t delete outbox message from DB');
         }

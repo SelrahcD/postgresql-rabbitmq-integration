@@ -1,9 +1,10 @@
 <?php
-namespace SelrahcD\PostgresRabbitMq;
+namespace SelrahcD\PostgresRabbitMq\OutboxDbWriter;
 
 use PDO;
+use SelrahcD\PostgresRabbitMq\OutboxDbWriter\OutboxDbWriter;
 
-class GoodOutboxBusDbWriter implements OutboxMessageBusDbWriter
+class GoodOutboxBusDbWriter implements OutboxDbWriter
 {
     private \PDO $pdo;
 

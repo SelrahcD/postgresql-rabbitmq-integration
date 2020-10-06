@@ -1,14 +1,14 @@
 <?php
 
 
-use SelrahcD\PostgresRabbitMq\MessageStorage\IntermittentFailureMessageStorage;
+use SelrahcD\PostgresRabbitMq\MessageStorage\FailingMessageStorage;
 
 class FailingToStoreMessageHasHandledTest extends PostgresqlRabbitmqIntegrationTest
 {
     protected function implementations()
     {
         return [
-            'MESSAGE_STORAGE' => IntermittentFailureMessageStorage::class,
+            'MESSAGE_STORAGE' => FailingMessageStorage::class,
             'MESSAGE_STORAGE_WRITE_FAILURE' => 1,
         ];
     }

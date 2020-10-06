@@ -3,14 +3,16 @@
 namespace SelrahcD\PostgresRabbitMq;
 
 use Ramsey\Uuid\Uuid;
+use SelrahcD\PostgresRabbitMq\AmqpMessagePublisher\AmqpMessagePublisher;
+use SelrahcD\PostgresRabbitMq\OutboxDbWriter\OutboxDbWriter;
 
 class OutboxMessageBus implements MessageBus
 {
-    private OutboxMessageBusDbWriter $outboxMessageBusDbWriter;
+    private OutboxDbWriter $outboxMessageBusDbWriter;
 
     private AmqpMessagePublisher $messagePublisher;
 
-    public function __construct(OutboxMessageBusDbWriter $outboxMessageBusDbWriter, AmqpMessagePublisher$messagePublisher)
+    public function __construct(OutboxDbWriter $outboxMessageBusDbWriter, AmqpMessagePublisher$messagePublisher)
     {
         $this->outboxMessageBusDbWriter = $outboxMessageBusDbWriter;
         $this->messagePublisher = $messagePublisher;

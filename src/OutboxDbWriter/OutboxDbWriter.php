@@ -1,10 +1,8 @@
 <?php
 
+namespace SelrahcD\PostgresRabbitMq\OutboxDbWriter;
 
-namespace SelrahcD\PostgresRabbitMq;
-
-
-interface OutboxMessageBusDbWriter
+interface OutboxDbWriter
 {
     public function insert(string $messageId, string $body): void;
 

@@ -4,7 +4,7 @@ namespace SelrahcD\PostgresRabbitMq\AmqpMessagePublisher;
 
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
-use SelrahcD\PostgresRabbitMq\AmqpMessagePublisher;
+use SelrahcD\PostgresRabbitMq\AmqpMessagePublisher\AmqpMessagePublisher;
 
 class GoodAmqpMessagePublisher implements AmqpMessagePublisher
 {
