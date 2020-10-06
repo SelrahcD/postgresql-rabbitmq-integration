@@ -5,6 +5,7 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
 use SelrahcD\PostgresRabbitMq\AmqpMessagePublisher;
 use SelrahcD\PostgresRabbitMq\AmqpMessagePublisher\IntermittentAmqpMessagePublisher;
 use SelrahcD\PostgresRabbitMq\AmqpMessagePublisher\GoodAmqpMessagePublisher;
+use SelrahcD\PostgresRabbitMq\GoodOutboxBusDbWriter;
 use SelrahcD\PostgresRabbitMq\Logger;
 use SelrahcD\PostgresRabbitMq\AmqpMessageBus\GoodAmqpMessageBus;
 use SelrahcD\PostgresRabbitMq\MessageBus;
@@ -13,6 +14,7 @@ use SelrahcD\PostgresRabbitMq\MessageStorage;
 use SelrahcD\PostgresRabbitMq\MessageStorage\GoodMessageStorage;
 use SelrahcD\PostgresRabbitMq\MessageStorage\IntermittentFailureMessageStorage;
 use SelrahcD\PostgresRabbitMq\OutboxMessageBus;
+use SelrahcD\PostgresRabbitMq\OutboxMessageBusDbWriter;
 use SelrahcD\PostgresRabbitMq\PDOWrapper;
 use SelrahcD\PostgresRabbitMq\QueueExchangeManager;
 use SelrahcD\PostgresRabbitMq\UserRepository\GoodUserRepository;
@@ -69,7 +71,14 @@ $container[GoodAmqpMessagePublisher::class] = new GoodAmqpMessagePublisher($cont
 $container[IntermittentAmqpMessagePublisher::class] = new IntermittentAmqpMessagePublisher($container[GoodAmqpMessagePublisher::class]);
 $container[AmqpMessagePublisher::class] = $container[$amqpMessagePublisher];
 
-$container[OutboxMessageBus::class] = new OutboxMessageBus($container[PDO::class], $container[AmqpMessagePublisher::class]);
+$outboxDbWriter = $amqpMessagePublisher = getenv('OUTBOX_DB_WRITER') !== false ? getenv('OUTBOX_DB_WRITER'): GoodOutboxBusDbWriter::class;
+$outboxDbWriterInsertFailureCount = getenv('OUTBOX_DB_WRITER_INSERT_FAILURE') !== false ? getenv('OUTBOX_DB_WRITER_INSERT_FAILURE') : 0;
+
+$container[GoodOutboxBusDbWriter::class] = new GoodOutboxBusDbWriter($container[PDO::class]);
+$container[IntermittentOutboxDbWriter::class] = new IntermittentOutboxDbWriter($container[GoodOutboxBusDbWriter::class], $outboxDbWriterInsertFailureCount);
+$container[OutboxMessageBusDbWriter::class] = $container[$outboxDbWriter];
+
+$container[OutboxMessageBus::class] = new OutboxMessageBus($container[OutboxMessageBusDbWriter::class], $container[AmqpMessagePublisher::class]);
 $container[MessageBus::class] = $container[OutboxMessageBus::class];
 
 $container[QueueExchangeManager::class] = new QueueExchangeManager($container[AMQPChannel::class]);
