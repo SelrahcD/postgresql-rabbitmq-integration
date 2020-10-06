@@ -8,7 +8,7 @@ use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use SelrahcD\PostgresRabbitMq\FixtureManagers;
 use SelrahcD\PostgresRabbitMq\Logger;
-use SelrahcD\PostgresRabbitMq\MessageStorage;
+use SelrahcD\PostgresRabbitMq\MessageStorage\GoodMessageStorage;
 use SelrahcD\PostgresRabbitMq\QueueExchangeManager;
 use SelrahcD\PostgresRabbitMq\UserRepository\GoodUserRepository;
 use Symfony\Component\Process\Process;
@@ -31,7 +31,7 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
 
     protected string $username;
 
-    protected MessageStorage $messageStorage;
+    protected GoodMessageStorage $messageStorage;
 
     protected GoodUserRepository $userRepository;
 
@@ -50,7 +50,7 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
 
         $this->pdo = $container[PDO::class];
 
-        $this->messageStorage = $container[MessageStorage::class];
+        $this->messageStorage = $container[GoodMessageStorage::class];
 
         $this->userRepository = $container[GoodUserRepository::class];
 

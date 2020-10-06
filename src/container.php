@@ -6,6 +6,8 @@ use SelrahcD\PostgresRabbitMq\Logger;
 use SelrahcD\PostgresRabbitMq\MessageBus;
 use SelrahcD\PostgresRabbitMq\MessageHandler;
 use SelrahcD\PostgresRabbitMq\MessageStorage;
+use SelrahcD\PostgresRabbitMq\MessageStorage\GoodMessageStorage;
+use SelrahcD\PostgresRabbitMq\MessageStorage\IntermittentFailureMessageStorage;
 use SelrahcD\PostgresRabbitMq\QueueExchangeManager;
 use SelrahcD\PostgresRabbitMq\UserRepository\GoodUserRepository;
 use SelrahcD\PostgresRabbitMq\UserRepository;
@@ -35,13 +37,18 @@ $container[AMQPStreamConnection::class] = new AMQPStreamConnection(
 );
 
 $userRepositoryClass = getenv('USER_REPOSITORY') !== false ? getenv('USER_REPOSITORY'): GoodUserRepository::class;
+$messageStorageClass = getenv('MESSAGE_STORAGE') !== false ? getenv('MESSAGE_STORAGE'): GoodMessageStorage::class;
 
 $container[GoodUserRepository::class] = new GoodUserRepository($container[PDO::class]);
 $container[IntermittentFailureUserRepository::class] = new IntermittentFailureUserRepository($container[GoodUserRepository::class]);
 $container[UserRepository::class] = $container[$userRepositoryClass];
+
+$container[GoodMessageStorage::class] = new GoodMessageStorage($container[PDO::class]);
+$container[IntermittentFailureMessageStorage::class] = new IntermittentFailureMessageStorage($container[GoodMessageStorage::class]);
+$container[MessageStorage::class] =  $container[$messageStorageClass];
+
 $container[Logger::class] = new Logger(getenv('MESSAGE_LOG_FILE'));
-$container[MessageStorage::class] = new MessageStorage($container[PDO::class]);
-$container[MessageStorage::class] = new MessageStorage($container[PDO::class]);
+$container[GoodMessageStorage::class] = new GoodMessageStorage($container[PDO::class]);
 $container[AMQPChannel::class] = $container[AMQPStreamConnection::class]->channel();
 $container[MessageBus::class] = new MessageBus($container[AMQPChannel::class]);
 $container[QueueExchangeManager::class] = new QueueExchangeManager($container[AMQPChannel::class]);

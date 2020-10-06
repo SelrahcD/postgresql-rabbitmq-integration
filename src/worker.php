@@ -14,29 +14,38 @@ $connection = $container[AMQPStreamConnection::class];
 $messageStorage = $container[MessageStorage::class];
 $logger = $container[Logger::class];
 /**
+ * @var PDO $pdo
+ */
+$pdo = $container[PDO::class];
+/**
  * @var AMQPChannel $channel
  */
 $channel = $container[AMQPChannel::class];
 $messageHandler = $container[MessageHandler::class];
 $container[QueueExchangeManager::class]->setupQueues();
 
-$callback = function (AMQPMessage $message) use($logger, $messageStorage, $messageHandler) {
+$callback = function (AMQPMessage $message) use($logger, $messageStorage, $messageHandler, $pdo) {
 
     $headers = $message->get_properties();
     $messageId = $headers['message_id'];
     $logger->logMessageReceived($messageId);
+
+    $pdo->beginTransaction();
 
     if(!$messageStorage->isAlreadyHandled($messageId)) {
         try {
             $messageHandler->handle($message);
             $messageStorage->recordMessageAsHandled($messageId);
         } catch (\Exception $exception) {
+            $pdo->rollBack();
             $message->nack(true);
             $logger->logMessageNacked($messageId);
             return;
         }
 
     }
+
+    $pdo->commit();
 
     $logger->logMessageHandled($messageId);
 
