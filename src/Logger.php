@@ -107,4 +107,19 @@ class Logger
     {
         return file_get_contents($this->messageLogFile, 'r');
     }
+
+    public function hasBeenAckedAtLeast(string $messageId, int $minimumCalls)
+    {
+        $searchedLog = (string) (new LogMessage())->acked($messageId);
+        $logFile = fopen($this->messageLogFile, 'r');
+
+        $count = 0;
+        while (($line = fgets($logFile)) !== false) {
+            if($line == $searchedLog) {
+                $count++;
+            }
+        }
+
+        return $count >= $minimumCalls;
+    }
 }

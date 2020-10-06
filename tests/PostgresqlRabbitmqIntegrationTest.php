@@ -7,7 +7,6 @@ use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
 use SelrahcD\PostgresRabbitMq\FixtureManagers;
 use SelrahcD\PostgresRabbitMq\Logger;
-use SelrahcD\PostgresRabbitMq\MessageStorage\MessageStorage;
 use SelrahcD\PostgresRabbitMq\QueueExchangeManager;
 use SelrahcD\PostgresRabbitMq\UserRepository\GoodUserRepository;
 use Symfony\Component\Process\Process;
@@ -78,16 +77,14 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
         }
 
         $start = time();
-        $messageWasAcked = false;
-        $messagesWereHandled = false;
-        while (!$messageWasAcked && !$messagesWereHandled) {
+        $messagesWereAcked = false;
+        while (!$messagesWereAcked) {
 
             if (time() - $start > 5) {
-                $this->fail('Message wasn\'t acked after 5 seconds');
+                $this->fail('Messages weren\'t acked after 5 seconds');
             }
 
-            $messageWasAcked = $this->logger->hasBeenAcked($this->messageId);
-            $messagesWereHandled = $this->logger->hasHandledMessageAtLeast($this->messageId, count($messages));
+            $messagesWereAcked = $this->logger->hasBeenAckedAtLeast($this->messageId, count($messages));
         }
     }
 
