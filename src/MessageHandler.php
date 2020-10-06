@@ -1,6 +1,5 @@
 <?php
 
-
 namespace SelrahcD\PostgresRabbitMq;
 
 use PhpAmqpLib\Message\AMQPMessage;
