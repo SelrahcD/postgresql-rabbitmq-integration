@@ -74,9 +74,10 @@ $container[AmqpMessagePublisher::class] = $container[$amqpMessagePublisher];
 $outboxDbWriter = $amqpMessagePublisher = getenv('OUTBOX_DB_WRITER') !== false ? getenv('OUTBOX_DB_WRITER'): GoodOutboxBusDbWriter::class;
 $outboxDbWriterInsertFailureCount = getenv('OUTBOX_DB_WRITER_INSERT_FAILURE') !== false ? getenv('OUTBOX_DB_WRITER_INSERT_FAILURE') : 0;
 $outboxDbWriterReadFailureCount = getenv('OUTBOX_DB_WRITER_READ_FAILURE') !== false ? getenv('OUTBOX_DB_WRITER_READ_FAILURE') : 0;
+$outboxDbWriterDeleteFailureCount = getenv('OUTBOX_DB_WRITER_DELETE_FAILURE') !== false ? getenv('OUTBOX_DB_WRITER_DELETE_FAILURE') : 0;
 
 $container[GoodOutboxBusDbWriter::class] = new GoodOutboxBusDbWriter($container[PDO::class]);
-$container[IntermittentOutboxDbWriter::class] = new IntermittentOutboxDbWriter($container[GoodOutboxBusDbWriter::class], $outboxDbWriterInsertFailureCount, $outboxDbWriterReadFailureCount);
+$container[IntermittentOutboxDbWriter::class] = new IntermittentOutboxDbWriter($container[GoodOutboxBusDbWriter::class], $outboxDbWriterInsertFailureCount, $outboxDbWriterReadFailureCount, $outboxDbWriterDeleteFailureCount);
 $container[OutboxMessageBusDbWriter::class] = $container[$outboxDbWriter];
 
 $container[OutboxMessageBus::class] = new OutboxMessageBus($container[OutboxMessageBusDbWriter::class], $container[AmqpMessagePublisher::class]);

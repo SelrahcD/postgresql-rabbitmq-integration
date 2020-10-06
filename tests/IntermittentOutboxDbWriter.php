@@ -13,12 +13,14 @@ class IntermittentOutboxDbWriter implements OutboxMessageBusDbWriter
 
     private int $outboxDbWriterInsertFailureCount;
     private int $outboxDbWriterReadFailureCount;
+    private int $outboxDbWriterDeleteFailureCount;
 
-    public function __construct(GoodOutboxBusDbWriter $outboxBusDbWriter, int $outboxDbWriterInsertFailureCount, int $outboxDbWriterReadFailureCount)
+    public function __construct(GoodOutboxBusDbWriter $outboxBusDbWriter, int $outboxDbWriterInsertFailureCount, int $outboxDbWriterReadFailureCount, int $outboxDbWriterDeleteFailureCount)
     {
         $this->outboxBusDbWriter = $outboxBusDbWriter;
         $this->outboxDbWriterInsertFailureCount = $outboxDbWriterInsertFailureCount;
         $this->outboxDbWriterReadFailureCount = $outboxDbWriterReadFailureCount;
+        $this->outboxDbWriterDeleteFailureCount = $outboxDbWriterDeleteFailureCount;
     }
 
     public function insert(string $messageId, string $body): void
@@ -43,6 +45,10 @@ class IntermittentOutboxDbWriter implements OutboxMessageBusDbWriter
 
     public function delete(string $messageId): void
     {
+        if($this->outboxDbWriterDeleteFailureCount !== 0) {
+            $this->outboxDbWriterDeleteFailureCount--;
+            throw new Exception('Couldn\'t delete outbox message from DB');
+        }
         $this->outboxBusDbWriter->delete($messageId);
     }
 }
