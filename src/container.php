@@ -10,6 +10,7 @@ use SelrahcD\PostgresRabbitMq\MessageHandler;
 use SelrahcD\PostgresRabbitMq\MessageStorage;
 use SelrahcD\PostgresRabbitMq\MessageStorage\GoodMessageStorage;
 use SelrahcD\PostgresRabbitMq\MessageStorage\IntermittentFailureMessageStorage;
+use SelrahcD\PostgresRabbitMq\PDOWrapper;
 use SelrahcD\PostgresRabbitMq\QueueExchangeManager;
 use SelrahcD\PostgresRabbitMq\UserRepository\GoodUserRepository;
 use SelrahcD\PostgresRabbitMq\UserRepository;
@@ -25,8 +26,9 @@ $postgresUsername = getenv('POSTGRES_USER');
 $postgresPassword = getenv('POSTGRES_PASSWORD');
 
 $dsn = "pgsql:host=$postgresHost;port=5432;dbname=$postgresDB;user=$postgresUsername;password=$postgresPassword";
+$pdoStartTransactionFailure = getenv('PDO_START_TRANSACTION_FAILURE') !== false ? getenv('PDO_START_TRANSACTION_FAILURE'): 0;
 
-$pdo = new PDO($dsn);
+$pdo = new PDOWrapper($dsn, $pdoStartTransactionFailure);
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 $container[PDO::class] = $pdo;
@@ -37,6 +39,7 @@ $container[AMQPStreamConnection::class] = new AMQPStreamConnection(
     getenv('RABBITMQ_DEFAULT_USER'),
     getenv('RABBITMQ_DEFAULT_PASS')
 );
+
 
 $userRepositoryClass = getenv('USER_REPOSITORY') !== false ? getenv('USER_REPOSITORY'): GoodUserRepository::class;
 $messageStorageClass = getenv('MESSAGE_STORAGE') !== false ? getenv('MESSAGE_STORAGE'): GoodMessageStorage::class;

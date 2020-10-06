@@ -30,16 +30,20 @@ $callback = function (AMQPMessage $message) use($logger, $messageStorage, $messa
     $messageId = $headers['message_id'];
     $logger->logMessageReceived($messageId);
 
-    $pdo->beginTransaction();
-
     try {
+        $pdo->beginTransaction();
+
         if(!$messageStorage->isAlreadyHandled($messageId)) {
                 $messageHandler->handle($message);
                 $messageStorage->recordMessageAsHandled($messageId);
         }
     } catch (\Exception $exception) {
         echo $exception->getMessage();
-        $pdo->rollBack();
+
+        if($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+
         $message->nack(true);
         $logger->logMessageNacked($messageId);
         return;
