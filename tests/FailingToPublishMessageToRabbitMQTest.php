@@ -9,6 +9,7 @@ class FailingToPublishMessageToRabbitMQTest extends PostgresqlRabbitmqIntegratio
     {
         return [
             'AMQP_MESSAGE_PUBLISHER' => IntermittentAmqpMessagePublisher::class,
+            'AMQP_MESSAGE_PUBLISH_FAILURES' => 1,
         ];
     }
 

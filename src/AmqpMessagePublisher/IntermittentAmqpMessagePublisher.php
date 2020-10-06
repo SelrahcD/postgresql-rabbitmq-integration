@@ -13,9 +13,10 @@ class IntermittentAmqpMessagePublisher implements AmqpMessagePublisher
     /**
      * IntermittentRabbitMQMessageBus constructor.
      */
-    public function __construct(GoodAmqpMessagePublisher $messagePublisher)
+    public function __construct(GoodAmqpMessagePublisher $messagePublisher, int $expectedFailureCount)
     {
         $this->messagePublisher = $messagePublisher;
+        $this->expectedFailureCount = $expectedFailureCount;
     }
 
 

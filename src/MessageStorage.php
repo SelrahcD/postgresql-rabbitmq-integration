@@ -6,5 +6,5 @@ interface MessageStorage
 {
     public function recordMessageAsHandled(string $messageId): void;
 
-    public function isAlreadyHandled(string $messageId);
+    public function isAlreadyHandled(string $messageId): bool;
 }

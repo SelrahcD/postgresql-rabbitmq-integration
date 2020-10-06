@@ -33,7 +33,7 @@ class GoodMessageStorage implements MessageStorage
         return $count > 0;
     }
 
-    public function isAlreadyHandled(string $messageId)
+    public function isAlreadyHandled(string $messageId): bool
     {
         $sth = $this->pdo->prepare("SELECT count(*) FROM received_messages WHERE message_id = :message_id");
         $sth->bindParam(':message_id', $messageId);

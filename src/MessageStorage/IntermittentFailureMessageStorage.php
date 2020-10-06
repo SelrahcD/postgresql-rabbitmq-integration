@@ -33,13 +33,13 @@ class IntermittentFailureMessageStorage implements MessageStorage
         $this->messageStorage->recordMessageAsHandled($messageId);
     }
 
-    public function isAlreadyHandled(string $messageId)
+    public function isAlreadyHandled(string $messageId): bool
     {
         if($this->readFailure !== 0) {
             $this->readFailure--;
             throw new \Exception('Couldn\'t read if message was handled');
         }
 
-        $this->messageStorage->isAlreadyHandled($messageId);
+        return $this->messageStorage->isAlreadyHandled($messageId);
     }
 }

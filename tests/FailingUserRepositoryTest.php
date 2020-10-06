@@ -7,7 +7,7 @@ class FailingUserRepositoryTest extends PostgresqlRabbitmqIntegrationTest
     protected function implementations()
     {
         return [
-            'USER_REPOSITORY' => IntermittentFailureUserRepository::class,
+            'USER_REPOSITORY_REGISTRATION_FAILURE' => 1
         ];
     }
 

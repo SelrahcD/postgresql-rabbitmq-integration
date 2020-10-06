@@ -8,23 +8,20 @@ use SelrahcD\PostgresRabbitMq\UserRepository;
 
 class IntermittentFailureUserRepository implements UserRepository
 {
-    private int $failureCount = 0;
-
-    /**
-     * @var GoodUserRepository
-     */
     private GoodUserRepository $userRepository;
 
+    private int $registrationFailureCount;
 
-    public function __construct(GoodUserRepository $userRepository)
+    public function __construct(GoodUserRepository $userRepository, int $registrationFailureCount)
     {
         $this->userRepository = $userRepository;
+        $this->registrationFailureCount = $registrationFailureCount;
     }
 
     public function registerUser(string $username): void
     {
-        if($this->failureCount === 0) {
-            $this->failureCount++;
+        if($this->registrationFailureCount !== 0) {
+            $this->registrationFailureCount--;
             throw new \Exception('Couldn\'t register user in DB');
         }
 

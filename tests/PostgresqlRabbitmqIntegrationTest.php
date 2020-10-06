@@ -5,10 +5,9 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
-use Ramsey\Uuid\UuidInterface;
 use SelrahcD\PostgresRabbitMq\FixtureManagers;
 use SelrahcD\PostgresRabbitMq\Logger;
-use SelrahcD\PostgresRabbitMq\MessageStorage\GoodMessageStorage;
+use SelrahcD\PostgresRabbitMq\MessageStorage;
 use SelrahcD\PostgresRabbitMq\QueueExchangeManager;
 use SelrahcD\PostgresRabbitMq\UserRepository\GoodUserRepository;
 use Symfony\Component\Process\Process;
@@ -30,9 +29,7 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
     protected string $messageId;
 
     protected string $username;
-
-    protected GoodMessageStorage $messageStorage;
-
+    
     protected GoodUserRepository $userRepository;
 
     protected Logger $logger;
@@ -49,8 +46,6 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
         $this->channel = $this->connection->channel();
 
         $this->pdo = $container[PDO::class];
-
-        $this->messageStorage = $container[GoodMessageStorage::class];
 
         $this->userRepository = $container[GoodUserRepository::class];
 
