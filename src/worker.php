@@ -49,7 +49,11 @@ $callback = function (AMQPMessage $message) use($logger, $messageStorage, $messa
         return;
     }
 
-    $pdo->commit();
+    if($pdo->commit() == false) {
+        $message->nack(true);
+        $logger->logMessageNacked($messageId);
+        return;
+    }
 
     $logger->logMessageHandled($messageId);
 

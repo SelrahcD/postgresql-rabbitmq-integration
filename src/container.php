@@ -27,8 +27,9 @@ $postgresPassword = getenv('POSTGRES_PASSWORD');
 
 $dsn = "pgsql:host=$postgresHost;port=5432;dbname=$postgresDB;user=$postgresUsername;password=$postgresPassword";
 $pdoStartTransactionFailure = getenv('PDO_START_TRANSACTION_FAILURE') !== false ? getenv('PDO_START_TRANSACTION_FAILURE'): 0;
+$pdoCommitTransactionFailure = getenv('PDO_COMMIT_TRANSACTION_FAILURE') !== false ? getenv('PDO_COMMIT_TRANSACTION_FAILURE'): 0;
 
-$pdo = new PDOWrapper($dsn, $pdoStartTransactionFailure);
+$pdo = new PDOWrapper($dsn, $pdoStartTransactionFailure, $pdoCommitTransactionFailure);
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 $container[PDO::class] = $pdo;
