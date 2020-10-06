@@ -37,6 +37,7 @@ $callback = function (AMQPMessage $message) use($logger, $messageStorage, $messa
             $messageHandler->handle($message);
             $messageStorage->recordMessageAsHandled($messageId);
         } catch (\Exception $exception) {
+            echo $exception->getMessage();
             $pdo->rollBack();
             $message->nack(true);
             $logger->logMessageNacked($messageId);

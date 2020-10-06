@@ -13,18 +13,19 @@ class IntermittentFailureMessageStorage implements MessageStorage
      */
     private GoodMessageStorage $messageStorage;
 
-    private int $failureCount = 0;
+    private int $failureToWrite;
 
-    public function __construct(GoodMessageStorage $messageStorage)
+    public function __construct(GoodMessageStorage $messageStorage, int $failureToWrite)
     {
         $this->messageStorage = $messageStorage;
+        $this->failureToWrite = $failureToWrite;
     }
 
     public function recordMessageAsHandled(string $messageId): void
     {
-        if($this->failureCount === 0) {
-            $this->failureCount++;
-            throw new \Exception('Temporary failure');
+        if($this->failureToWrite !== 0) {
+            $this->failureToWrite--;
+            throw new \Exception('Couldn\'t store message has handled');
         }
 
         $this->messageStorage->recordMessageAsHandled($messageId);
@@ -32,6 +33,6 @@ class IntermittentFailureMessageStorage implements MessageStorage
 
     public function isAlreadyHandled(string $messageId)
     {
-        $this->messageStorage->recordMessageAsHandled($messageId);
+        $this->messageStorage->isAlreadyHandled($messageId);
     }
 }

@@ -38,13 +38,14 @@ $container[AMQPStreamConnection::class] = new AMQPStreamConnection(
 
 $userRepositoryClass = getenv('USER_REPOSITORY') !== false ? getenv('USER_REPOSITORY'): GoodUserRepository::class;
 $messageStorageClass = getenv('MESSAGE_STORAGE') !== false ? getenv('MESSAGE_STORAGE'): GoodMessageStorage::class;
+$failureToWrite = getenv('MESSAGE_STORAGE_WRITE_FAILURE') !== false ? getenv('MESSAGE_STORAGE_WRITE_FAILURE'): 0;
 
 $container[GoodUserRepository::class] = new GoodUserRepository($container[PDO::class]);
 $container[IntermittentFailureUserRepository::class] = new IntermittentFailureUserRepository($container[GoodUserRepository::class]);
 $container[UserRepository::class] = $container[$userRepositoryClass];
 
 $container[GoodMessageStorage::class] = new GoodMessageStorage($container[PDO::class]);
-$container[IntermittentFailureMessageStorage::class] = new IntermittentFailureMessageStorage($container[GoodMessageStorage::class]);
+$container[IntermittentFailureMessageStorage::class] = new IntermittentFailureMessageStorage($container[GoodMessageStorage::class], $failureToWrite);
 $container[MessageStorage::class] =  $container[$messageStorageClass];
 
 $container[Logger::class] = new Logger(getenv('MESSAGE_LOG_FILE'));

@@ -25,7 +25,7 @@ class IntermittentFailureUserRepository implements UserRepository
     {
         if($this->failureCount === 0) {
             $this->failureCount++;
-            throw new \Exception('Temporary failure');
+            throw new \Exception('Couldn\'t register user in DB');
         }
 
         $this->userRepository->registerUser($username);
