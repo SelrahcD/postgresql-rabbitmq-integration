@@ -9,8 +9,7 @@ class MessageIsSentSeveralTimesTest extends PostgresqlRabbitmqIntegrationTest
     {
         return [$this->buildCreateUserMessage(), $this->buildCreateUserMessage()];
     }
-
-
+    
     protected function expectedLogs(): LogMessage
     {
         return (new LogMessage())

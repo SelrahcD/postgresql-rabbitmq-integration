@@ -21,16 +21,4 @@ class FailingToCommitTransactionTest extends PostgresqlRabbitmqIntegrationTest
             ->handled($this->messageId)
             ->acked($this->messageId);
     }
-
-    /**
-     * @test
-     */
-    public function logs_error(): void
-    {
-        $expectedLogs = <<<EOL
-Couldn't commit
-EOL;
-
-        self::assertEquals($expectedLogs, $this->process->getOutput());
-    }
 }

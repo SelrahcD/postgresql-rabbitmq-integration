@@ -23,16 +23,4 @@ class FailingUserRepositoryTest extends PostgresqlRabbitmqIntegrationTest
             ->handled($this->messageId)
             ->acked($this->messageId);
     }
-
-    /**
-     * @test
-     */
-    public function logs_error(): void
-    {
-        $expectedLogs = <<<EOL
-Couldn't register user in DB
-EOL;
-
-        self::assertEquals($expectedLogs, $this->process->getOutput());
-    }
 }

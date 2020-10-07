@@ -24,16 +24,4 @@ class FailingToReadUnsentMessageFromDbTest extends PostgresqlRabbitmqIntegration
             ->handled($this->messageId)
             ->acked($this->messageId);
     }
-
-    /**
-     * @test
-     */
-    public function logs_error(): void
-    {
-        $expectedLogs = <<<EOL
-Couldn't read outbox unsent message from DB
-EOL;
-
-        self::assertEquals($expectedLogs, $this->process->getOutput());
-    }
 }

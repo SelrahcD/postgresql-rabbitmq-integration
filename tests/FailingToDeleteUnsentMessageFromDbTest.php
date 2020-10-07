@@ -26,16 +26,4 @@ class FailingToDeleteUnsentMessageFromDbTest extends PostgresqlRabbitmqIntegrati
             ->handled($this->messageId)
             ->acked($this->messageId);
     }
-
-    /**
-     * @test
-     */
-    public function logs_error(): void
-    {
-        $expectedLogs = <<<EOL
-Couldn't delete outbox message from DB
-EOL;
-
-        self::assertEquals($expectedLogs, $this->process->getOutput());
-    }
 }

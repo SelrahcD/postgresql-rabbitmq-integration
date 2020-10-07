@@ -21,16 +21,4 @@ class FailingToStartTransactionTest extends PostgresqlRabbitmqIntegrationTest
             ->handled($this->messageId)
             ->acked($this->messageId);
     }
-
-    /**
-     * @test
-     */
-     public function logs_error(): void
-     {
-         $expectedLogs = <<<EOL
-Couldn't start transaction
-EOL;
-
-         self::assertEquals($expectedLogs, $this->process->getOutput());
-     }
 }
