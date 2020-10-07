@@ -108,30 +108,19 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
     /**
      * @test
      */
-    public function all_dispatched_messages_have_the_same_message_id(): void
-    {
-        $receivedMessageIds = [];
+     public function all_dispatched_messages_have_the_same_message_id(): void
+     {
+         $dispatchedMessages = $this->dispatchedMessages();
 
-        $callback = function (AMQPMessage $message) use (&$receivedMessageIds) {
-            $headers = $message->get_properties();
-            $messageId = $headers['message_id'];
+         $dispatchMessageIds = array_map(function(AMQPMessage $message) {
+             $headers = $message->get_properties();
+             return $headers['message_id'];
+         }, $dispatchedMessages);
 
-            $receivedMessageIds[] = $messageId;
-        };
+         $uniqueDispatchMessageIds = array_unique($dispatchMessageIds);
 
-        $this->channel->basic_consume('outgoing_message_queue', '', false, true, false, false, $callback);
-
-        $start = time();
-        $keepWaiting = true;
-        while ($this->channel->is_consuming() && $keepWaiting && count($receivedMessageIds) < 2) {
-            $this->channel->wait(null, true);
-            $keepWaiting = time() - $start < 2;
-        }
-
-        $uniqueReceivedMessageIds = array_unique($receivedMessageIds);
-
-        self::assertCount(1, $uniqueReceivedMessageIds);
-    }
+         self::assertCount(1, $uniqueDispatchMessageIds);
+     }
 
     /**
      * @test
@@ -181,5 +170,25 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
     protected function implementations()
     {
         return [];
+    }
+
+    private function dispatchedMessages(): array {
+
+        $receivedMessages = [];
+
+        $callback = function (AMQPMessage $message) use (&$receivedMessages) {
+            $receivedMessages[] = $message;
+        };
+
+        list(, $messageCount) = $this->channel->queue_declare('outgoing_message_queue', true);
+        $this->channel->basic_consume('outgoing_message_queue', '', false, true, false, false, $callback);
+
+        $keepWaiting = true;
+        while ($keepWaiting) {
+            $this->channel->wait(null, true);
+            $keepWaiting = $messageCount > count($receivedMessages);
+        }
+
+        return $receivedMessages;
     }
 }
