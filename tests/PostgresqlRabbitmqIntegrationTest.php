@@ -101,52 +101,47 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
     /**
      * @test
      */
-     public function logs_are_as_expected(): void
+     public function everything_went_as_expected(): void
+     {
+         $this->logs_are_as_expected();
+         $this->user_is_stored_in_users_table_only_once();
+
+         $dispatchedMessages = $this->dispatchedMessages();
+
+         $this->all_dispatched_messages_have_the_same_message_id($dispatchedMessages);
+         $this->userRegistered_event_is_dispatched($dispatchedMessages);
+     }
+
+     private function logs_are_as_expected(): void
      {
          self::assertEquals($this->expectedLogs(), $this->logger->allLogs());
      }
 
-    /**
-     * @test
-     */
-    public function user_is_stored_in_users_table_only_once(): void
+    private function user_is_stored_in_users_table_only_once(): void
     {
         self::assertEquals(1, $this->userRepository->countOfUserRegisteredWith($this->username));
     }
 
-    /**
-     * @test
-     */
-     public function all_dispatched_messages_have_the_same_message_id(): void
-     {
-         $dispatchedMessages = $this->dispatchedMessages();
-
-         $dispatchMessageIds = array_map(function(AMQPMessage $message) {
-             $headers = $message->get_properties();
-             return $headers['message_id'];
-         }, $dispatchedMessages);
-
-         $uniqueDispatchMessageIds = array_unique($dispatchMessageIds);
-
-         self::assertCount(1, $uniqueDispatchMessageIds);
-     }
-
-    /**
-     * @test
-     */
-    public function userRegistered_event_is_dispatched(): void
+    private function all_dispatched_messages_have_the_same_message_id(array $dispatchedMessages): void
     {
-        $dispatchedMessages = $this->dispatchedMessages();
+        $dispatchMessageIds = array_map(function(AMQPMessage $message) {
+            $headers = $message->get_properties();
+            return $headers['message_id'];
+        }, $dispatchedMessages);
 
+        $uniqueDispatchMessageIds = array_unique($dispatchMessageIds);
+
+        self::assertCount(1, $uniqueDispatchMessageIds, 'Dispatched events don\'t have the same message_id');
+    }
+
+    public function userRegistered_event_is_dispatched(array $dispatchedMessages): void
+    {
         $expectedMessage = json_encode(['eventName' => 'UserRegistered', 'username' => $this->username]);
-        $found = false;
-        foreach ($dispatchedMessages as $dispatchedMessage) {
-            if($dispatchedMessage->body === $expectedMessage) {
-                $found = true;
-            }
-        }
+        $messages = array_map(function(AMQPMessage $message) {
+            return $message->body;
+        }, $dispatchedMessages);
 
-        self::assertTrue($found, 'UserRegistered event wasn\'t dispatched');
+        self::assertContains($expectedMessage, $messages, 'UserRegistered event wasn\'t dispatched');
     }
 
     protected function buildCreateUserMessage()
