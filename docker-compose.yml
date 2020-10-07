@@ -9,18 +9,16 @@ services:
     env_file: .env
 
   php:
+    image: selrahcd/postgresql-rabbitmq-integration:test
     build:
       context: .
+      target: test
     env_file: .env
     depends_on:
       - postgresql
       - rabbitmq
-    volumes:
-      - .:/usr/src/app
 
   rabbitmq:
     image: rabbitmq:3-management
-    ports:
-      - 15672:15672
     env_file:
       - .env

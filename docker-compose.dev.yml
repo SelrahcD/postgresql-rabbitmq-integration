@@ -1,0 +1,11 @@
+version: "3.7"
+
+services:
+
+  php:
+    volumes:
+      - .:/src
+
+  rabbitmq:
+    ports:
+      - 15672:15672

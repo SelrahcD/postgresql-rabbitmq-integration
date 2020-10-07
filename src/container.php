@@ -44,14 +44,27 @@ $postgresPassword = getenv('POSTGRES_PASSWORD');
 $dsn = "pgsql:host=$postgresHost;port=5432;dbname=$postgresDB;user=$postgresUsername;password=$postgresPassword";
 $container[Logger::class] = new Logger(getenv('MESSAGE_LOG_FILE'));
 
-$pdo = new PDOWrapper($dsn,
-    getEnvOrDefault(PDO_START_TRANSACTION_FAILURE, 0),
-    getEnvOrDefault(PDO_COMMIT_TRANSACTION_FAILURE, 0)
-);
-$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$start = time();
+$keepTrying = true;
+while($keepTrying && !isset($container[PDO::class])) {
+    $keepTrying = time() - $start < 60;
 
-$container[PDO::class] = $pdo;
+    if(!$keepTrying) {
+        throw new Exception('Couldn\'t connect to PostgreSQL.');
+    }
 
+    try {
+        $pdo = new PDOWrapper($dsn,
+            getEnvOrDefault(PDO_START_TRANSACTION_FAILURE, 0),
+            getEnvOrDefault(PDO_COMMIT_TRANSACTION_FAILURE, 0)
+        );
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        $container[PDO::class] = $pdo;
+    } catch (PDOException $e) {
+        sleep(1);
+    }
+}
 
 $start = time();
 $keepTrying = true;
@@ -72,8 +85,6 @@ while($keepTrying && !isset($container[AMQPStreamConnection::class])) {
     } catch (AMQPIOException $e) {
         sleep(1);
     }
-
-
 }
 
 
