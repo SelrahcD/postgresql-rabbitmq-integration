@@ -27,7 +27,7 @@ class FailingMessageStorage implements MessageStorage
     {
         if($this->writeFailure !== 0) {
             $this->writeFailure--;
-            throw new \Exception('Couldn\'t store message has handled');
+            throw new \Exception(MESSAGE_STORAGE_WRITE_FAILURE);
         }
 
         $this->messageStorage->recordMessageAsHandled($messageId);
@@ -37,7 +37,7 @@ class FailingMessageStorage implements MessageStorage
     {
         if($this->readFailure !== 0) {
             $this->readFailure--;
-            throw new \Exception('Couldn\'t read if message was handled');
+            throw new \Exception(MESSAGE_STORAGE_READ_FAILURE);
         }
 
         return $this->messageStorage->isAlreadyHandled($messageId);

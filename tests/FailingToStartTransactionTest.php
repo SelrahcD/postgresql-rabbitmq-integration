@@ -7,7 +7,7 @@ class FailingToStartTransactionTest extends PostgresqlRabbitmqIntegrationTest
     protected function implementations()
     {
         return [
-            'PDO_START_TRANSACTION_FAILURE' => 1,
+            PDO_START_TRANSACTION_FAILURE => 1,
         ];
     }
 
@@ -15,7 +15,7 @@ class FailingToStartTransactionTest extends PostgresqlRabbitmqIntegrationTest
     {
         return (new LogMessage())
             ->received($this->messageId)
-            ->error('Couldn\'t start transaction')
+            ->error(PDO_START_TRANSACTION_FAILURE)
             ->nacked($this->messageId)
             ->received($this->messageId)
             ->handled($this->messageId)

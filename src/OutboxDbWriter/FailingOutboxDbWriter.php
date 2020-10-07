@@ -34,7 +34,7 @@ class FailingOutboxDbWriter implements OutboxDbWriter
     {
         if ($this->outboxDbWriterInsertFailureCount !== 0) {
             $this->outboxDbWriterInsertFailureCount--;
-            throw new Exception('Couldn\'t insert outbox message in DB');
+            throw new Exception(OUTBOX_DB_WRITER_INSERT_FAILURE);
         }
 
         $this->outboxBusDbWriter->insert($messageId, $body);
@@ -44,7 +44,7 @@ class FailingOutboxDbWriter implements OutboxDbWriter
     {
         if ($this->outboxDbWriterReadFailureCount !== 0) {
             $this->outboxDbWriterReadFailureCount--;
-            throw new Exception('Couldn\'t read outbox unsent message from DB');
+            throw new Exception(OUTBOX_DB_WRITER_READ_FAILURE);
         }
 
         return $this->outboxBusDbWriter->unsentMessages();
@@ -54,7 +54,7 @@ class FailingOutboxDbWriter implements OutboxDbWriter
     {
         if ($this->outboxDbWriterDeleteFailureCount !== 0) {
             $this->outboxDbWriterDeleteFailureCount--;
-            throw new Exception('Couldn\'t delete outbox message from DB');
+            throw new Exception(OUTBOX_DB_WRITER_DELETE_FAILURE);
         }
         $this->outboxBusDbWriter->delete($messageId);
     }

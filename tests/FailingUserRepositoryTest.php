@@ -7,7 +7,7 @@ class FailingUserRepositoryTest extends PostgresqlRabbitmqIntegrationTest
     protected function implementations()
     {
         return [
-            'USER_REPOSITORY_REGISTRATION_FAILURE' => 1
+            USER_REPOSITORY_REGISTRATION_FAILURE => 1
         ];
     }
 
@@ -16,7 +16,7 @@ class FailingUserRepositoryTest extends PostgresqlRabbitmqIntegrationTest
     {
         return (new LogMessage())
             ->received($this->messageId)
-            ->error('Couldn\'t register user in DB')
+            ->error(USER_REPOSITORY_REGISTRATION_FAILURE)
             ->nacked($this->messageId)
             ->received($this->messageId)
             ->handled($this->messageId)

@@ -7,7 +7,7 @@ class FailingToReadUnsentMessageFromDbTest extends PostgresqlRabbitmqIntegration
     protected function implementations()
     {
         return [
-            'OUTBOX_DB_WRITER_READ_FAILURE' => 1
+            OUTBOX_DB_WRITER_READ_FAILURE => 1
         ];
     }
 
@@ -15,7 +15,7 @@ class FailingToReadUnsentMessageFromDbTest extends PostgresqlRabbitmqIntegration
     {
         return (new LogMessage())
             ->received($this->messageId)
-            ->error('Couldn\'t read outbox unsent message from DB')
+            ->error(OUTBOX_DB_WRITER_READ_FAILURE)
             ->nacked($this->messageId)
             ->received($this->messageId)
             ->handled($this->messageId)

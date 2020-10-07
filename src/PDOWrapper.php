@@ -20,7 +20,7 @@ class PDOWrapper extends \PDO
     {
         if($this->beginTransactionExpectedFailureCount !== 0) {
             $this->beginTransactionExpectedFailureCount--;
-            throw new \Exception('Couldn\'t start transaction');
+            throw new \Exception(PDO_START_TRANSACTION_FAILURE);
         }
 
         parent::beginTransaction();

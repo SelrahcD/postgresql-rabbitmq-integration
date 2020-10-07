@@ -50,7 +50,7 @@ $callback = function (AMQPMessage $message) use($logger, $messageStorage, $messa
         }
 
         if($pdo->commit() == false) {
-            throw new Exception('Couldn\'t commit');
+            throw new Exception(PDO_COMMIT_TRANSACTION_FAILURE);
         }
 
 

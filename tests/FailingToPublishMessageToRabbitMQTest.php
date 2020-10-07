@@ -7,7 +7,7 @@ class FailingToPublishMessageToRabbitMQTest extends PostgresqlRabbitmqIntegratio
     protected function implementations()
     {
         return [
-            'AMQP_MESSAGE_PUBLISH_FAILURES' => 1,
+            AMQP_MESSAGE_PUBLISH_FAILURES => 1,
         ];
     }
 
@@ -15,7 +15,7 @@ class FailingToPublishMessageToRabbitMQTest extends PostgresqlRabbitmqIntegratio
     {
         return (new LogMessage())
             ->received($this->messageId)
-            ->error('Couldn\'t publish to rabbitMQ')
+            ->error(AMQP_MESSAGE_PUBLISH_FAILURES)
             ->nacked($this->messageId)
             ->received($this->messageId)
             ->handled($this->messageId)

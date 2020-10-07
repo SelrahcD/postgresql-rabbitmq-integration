@@ -7,7 +7,7 @@ class FailingToCommitTransactionTest extends PostgresqlRabbitmqIntegrationTest
     protected function implementations()
     {
         return [
-            'PDO_COMMIT_TRANSACTION_FAILURE' => 1,
+            PDO_COMMIT_TRANSACTION_FAILURE => 1,
         ];
     }
 
@@ -15,7 +15,7 @@ class FailingToCommitTransactionTest extends PostgresqlRabbitmqIntegrationTest
     {
         return (new LogMessage())
             ->received($this->messageId)
-            ->error('Couldn\'t commit')
+            ->error(PDO_COMMIT_TRANSACTION_FAILURE)
             ->nacked($this->messageId)
             ->received($this->messageId)
             ->handled($this->messageId)

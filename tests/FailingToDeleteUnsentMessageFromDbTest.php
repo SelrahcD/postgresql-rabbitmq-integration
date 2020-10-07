@@ -6,7 +6,7 @@ class FailingToDeleteUnsentMessageFromDbTest extends PostgresqlRabbitmqIntegrati
     protected function implementations()
     {
         return [
-            'OUTBOX_DB_WRITER_DELETE_FAILURE' => 1
+            OUTBOX_DB_WRITER_DELETE_FAILURE => 1
         ];
     }
 
@@ -14,7 +14,7 @@ class FailingToDeleteUnsentMessageFromDbTest extends PostgresqlRabbitmqIntegrati
     {
         return (new LogMessage())
             ->received($this->messageId)
-            ->error('Couldn\'t delete outbox message from DB')
+            ->error(OUTBOX_DB_WRITER_DELETE_FAILURE)
             ->nacked($this->messageId)
             ->received($this->messageId)
             ->handled($this->messageId)

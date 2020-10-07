@@ -24,7 +24,7 @@ class FailingAmqpMessagePublisher implements AmqpMessagePublisher
     {
         if($this->expectedFailureCount !== 0) {
             $this->expectedFailureCount--;
-            throw new \Exception('Couldn\'t publish to rabbitMQ');
+            throw new \Exception(AMQP_MESSAGE_PUBLISH_FAILURES);
         }
 
         $this->messagePublisher->publish($message, $messageId);

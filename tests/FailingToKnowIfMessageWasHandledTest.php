@@ -7,7 +7,7 @@ class FailingToKnowIfMessageWasHandledTest extends PostgresqlRabbitmqIntegration
     protected function implementations()
     {
         return [
-            'MESSAGE_STORAGE_READ_FAILURE' => 1,
+            MESSAGE_STORAGE_READ_FAILURE => 1,
         ];
     }
 
@@ -15,7 +15,7 @@ class FailingToKnowIfMessageWasHandledTest extends PostgresqlRabbitmqIntegration
     {
         return (new LogMessage())
             ->received($this->messageId)
-            ->error('Couldn\'t read if message was handled')
+            ->error(MESSAGE_STORAGE_READ_FAILURE)
             ->nacked($this->messageId)
             ->received($this->messageId)
             ->handled($this->messageId)

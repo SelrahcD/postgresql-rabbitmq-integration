@@ -7,7 +7,7 @@ class FailingToStoreMessageHasHandledTest extends PostgresqlRabbitmqIntegrationT
     protected function implementations()
     {
         return [
-            'MESSAGE_STORAGE_WRITE_FAILURE' => 1,
+            MESSAGE_STORAGE_WRITE_FAILURE => 1,
         ];
     }
 
@@ -16,7 +16,7 @@ class FailingToStoreMessageHasHandledTest extends PostgresqlRabbitmqIntegrationT
     {
         return (new LogMessage())
             ->received($this->messageId)
-            ->error('Couldn\'t store message has handled')
+            ->error(MESSAGE_STORAGE_WRITE_FAILURE)
             ->nacked($this->messageId)
             ->received($this->messageId)
             ->handled($this->messageId)

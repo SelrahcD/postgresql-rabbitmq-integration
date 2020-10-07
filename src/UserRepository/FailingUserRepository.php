@@ -1,10 +1,6 @@
 <?php
 
-
 namespace SelrahcD\PostgresRabbitMq\UserRepository;
-
-
-use SelrahcD\PostgresRabbitMq\UserRepository\UserRepository;
 
 class FailingUserRepository implements UserRepository
 {
@@ -22,7 +18,7 @@ class FailingUserRepository implements UserRepository
     {
         if($this->registrationFailureCount !== 0) {
             $this->registrationFailureCount--;
-            throw new \Exception('Couldn\'t register user in DB');
+            throw new \Exception(USER_REPOSITORY_REGISTRATION_FAILURE);
         }
 
         $this->userRepository->registerUser($username);

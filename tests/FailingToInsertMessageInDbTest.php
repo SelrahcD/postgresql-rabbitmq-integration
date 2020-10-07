@@ -7,7 +7,7 @@ class FailingToInsertMessageInDbTest extends PostgresqlRabbitmqIntegrationTest
     protected function implementations()
     {
         return [
-            'OUTBOX_DB_WRITER_INSERT_FAILURE' => 1
+            OUTBOX_DB_WRITER_INSERT_FAILURE => 1
         ];
     }
 
@@ -15,7 +15,7 @@ class FailingToInsertMessageInDbTest extends PostgresqlRabbitmqIntegrationTest
     {
         return (new LogMessage())
             ->received($this->messageId)
-            ->error('Couldn\'t insert outbox message in DB')
+            ->error(OUTBOX_DB_WRITER_INSERT_FAILURE)
             ->nacked($this->messageId)
             ->received($this->messageId)
             ->handled($this->messageId)
