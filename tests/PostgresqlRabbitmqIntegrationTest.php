@@ -94,8 +94,6 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
         $this->channel->close();
         $this->connection->close();
         $this->process->stop();
-
-        echo $this->process->getOutput();
     }
 
     /**
