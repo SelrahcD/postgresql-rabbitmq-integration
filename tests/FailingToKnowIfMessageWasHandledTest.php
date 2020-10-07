@@ -14,23 +14,17 @@ class FailingToKnowIfMessageWasHandledTest extends PostgresqlRabbitmqIntegration
         ];
     }
 
-    /**
-     * @test
-     */
-    public function check_logs(): void
+    protected function expectedLogs(): LogMessage
     {
-        self::assertEquals(
-            (string)(new LogMessage())
-                ->received($this->messageId)
-                ->error('Couldn\'t read if message was handled')
-                ->nacked($this->messageId)
-                ->received($this->messageId)
-                ->handled($this->messageId)
-                ->acked($this->messageId)
-            ,
-            $this->logger->allLogs()
-        );
+        return (new LogMessage())
+            ->received($this->messageId)
+            ->error('Couldn\'t read if message was handled')
+            ->nacked($this->messageId)
+            ->received($this->messageId)
+            ->handled($this->messageId)
+            ->acked($this->messageId);
     }
+
     /**
      * @test
      */

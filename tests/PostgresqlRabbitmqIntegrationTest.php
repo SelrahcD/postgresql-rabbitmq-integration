@@ -7,6 +7,7 @@ use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
 use SelrahcD\PostgresRabbitMq\FixtureManagers;
 use SelrahcD\PostgresRabbitMq\Logger;
+use SelrahcD\PostgresRabbitMq\LogMessage;
 use SelrahcD\PostgresRabbitMq\QueueExchangeManager;
 use SelrahcD\PostgresRabbitMq\UserRepository\GoodUserRepository;
 use Symfony\Component\Process\Process;
@@ -100,6 +101,14 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
     /**
      * @test
      */
+     public function logs_are_as_expected(): void
+     {
+         self::assertEquals($this->expectedLogs(), $this->logger->allLogs());
+     }
+
+    /**
+     * @test
+     */
     public function user_is_stored_in_users_table_only_once(): void
     {
         self::assertEquals(1, $this->userRepository->countOfUserRegisteredWith($this->username));
@@ -177,5 +186,10 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
         }
 
         return $receivedMessages;
+    }
+
+    protected function expectedLogs(): LogMessage
+    {
+        return new LogMessage();
     }
 }

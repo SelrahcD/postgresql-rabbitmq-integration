@@ -12,22 +12,16 @@ class FailingUserRepositoryTest extends PostgresqlRabbitmqIntegrationTest
         ];
     }
 
-    /**
-     * @test
-     */
-    public function check_logs(): void
+
+    protected function expectedLogs(): LogMessage
     {
-        self::assertEquals(
-            (string)(new LogMessage())
-                ->received($this->messageId)
-                ->error('Couldn\'t register user in DB')
-                ->nacked($this->messageId)
-                ->received($this->messageId)
-                ->handled($this->messageId)
-                ->acked($this->messageId)
-            ,
-            $this->logger->allLogs()
-        );
+        return (new LogMessage())
+            ->received($this->messageId)
+            ->error('Couldn\'t register user in DB')
+            ->nacked($this->messageId)
+            ->received($this->messageId)
+            ->handled($this->messageId)
+            ->acked($this->messageId);
     }
 
     /**
