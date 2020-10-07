@@ -2,6 +2,7 @@
 
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Exception\AMQPIOException;
 use SelrahcD\PostgresRabbitMq\AmqpMessagePublisher\AmqpMessagePublisher;
 use SelrahcD\PostgresRabbitMq\AmqpMessagePublisher\FailingAmqpMessagePublisher;
 use SelrahcD\PostgresRabbitMq\AmqpMessagePublisher\GoodAmqpMessagePublisher;
@@ -51,12 +52,30 @@ $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 $container[PDO::class] = $pdo;
 
-$container[AMQPStreamConnection::class] = new AMQPStreamConnection(
-    getenv('RABBITMQ_HOST'),
-    getenv('RABBITMQ_PORT'),
-    getenv('RABBITMQ_DEFAULT_USER'),
-    getenv('RABBITMQ_DEFAULT_PASS')
-);
+
+$start = time();
+$keepTrying = true;
+while($keepTrying && !isset($container[AMQPStreamConnection::class])) {
+    $keepTrying = time() - $start < 60;
+
+    if(!$keepTrying) {
+        throw new Exception('Couldn\'t connect to RabbitMQ.');
+    }
+
+    try {
+        $container[AMQPStreamConnection::class] = new AMQPStreamConnection(
+            getenv('RABBITMQ_HOST'),
+            getenv('RABBITMQ_PORT'),
+            getenv('RABBITMQ_DEFAULT_USER'),
+            getenv('RABBITMQ_DEFAULT_PASS')
+        );
+    } catch (AMQPIOException $e) {
+        sleep(1);
+    }
+
+
+}
+
 
 $container[GoodUserRepository::class] = new GoodUserRepository($container[PDO::class]);
 
