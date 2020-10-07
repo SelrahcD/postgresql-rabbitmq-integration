@@ -127,30 +127,17 @@ abstract class PostgresqlRabbitmqIntegrationTest extends TestCase
      */
     public function userRegistered_event_is_dispatched(): void
     {
-        $receivedMessages = [];
+        $dispatchedMessages = $this->dispatchedMessages();
 
-        $callback = function (AMQPMessage $message) use (&$receivedMessages) {
-            $receivedMessages[] = $message->body;
-        };
-
-        $this->channel->basic_consume('outgoing_message_queue', '', false, true, false, false, $callback);
-
-        $start = time();
-        $messageReceived = false;
         $expectedMessage = json_encode(['eventName' => 'UserRegistered', 'username' => $this->username]);
-        while (!$messageReceived) {
-
-            $this->channel->wait(null, true);
-            if (time() - $start > 5) {
-                $this->fail('UserRegistered event wasn\'t received after 5 seconds');
-            }
-            foreach ($receivedMessages as $receivedMessage) {
-                if ($receivedMessage === $expectedMessage) {
-                    $messageReceived = true;
-                }
+        $found = false;
+        foreach ($dispatchedMessages as $dispatchedMessage) {
+            if($dispatchedMessage->body === $expectedMessage) {
+                $found = true;
             }
         }
-        self::assertTrue($messageReceived);
+
+        self::assertTrue($found, 'UserRegistered event wasn\'t dispatched');
     }
 
     protected function buildCreateUserMessage()
