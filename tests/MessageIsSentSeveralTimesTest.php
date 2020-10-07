@@ -1,6 +1,5 @@
 <?php
 
-
 use SelrahcD\PostgresRabbitMq\LogMessage;
 
 class MessageIsSentSeveralTimesTest extends PostgresqlRabbitmqIntegrationTest

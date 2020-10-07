@@ -1,7 +1,5 @@
 <?php
 
-
-use SelrahcD\PostgresRabbitMq\AmqpMessagePublisher\FailingAmqpMessagePublisher;
 use SelrahcD\PostgresRabbitMq\LogMessage;
 
 class FailingToPublishMessageToRabbitMQTest extends PostgresqlRabbitmqIntegrationTest
@@ -9,7 +7,6 @@ class FailingToPublishMessageToRabbitMQTest extends PostgresqlRabbitmqIntegratio
     protected function implementations()
     {
         return [
-            'AMQP_MESSAGE_PUBLISHER' => FailingAmqpMessagePublisher::class,
             'AMQP_MESSAGE_PUBLISH_FAILURES' => 1,
         ];
     }

@@ -1,17 +1,11 @@
 <?php
-
-
 use SelrahcD\PostgresRabbitMq\LogMessage;
-use SelrahcD\PostgresRabbitMq\MessageStorage\FailingMessageStorage;
-use SelrahcD\PostgresRabbitMq\OutboxDbWriter\FailingOutboxDbWriter;
 
 class FailingToDeleteUnsentMessageFromDbTest extends PostgresqlRabbitmqIntegrationTest
 {
     protected function implementations()
     {
         return [
-            'OUTBOX_DB_WRITER' => FailingOutboxDbWriter::class,
-            'MESSAGE_STORAGE' => FailingMessageStorage::class,
             'OUTBOX_DB_WRITER_DELETE_FAILURE' => 1
         ];
     }
