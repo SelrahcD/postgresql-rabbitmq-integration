@@ -1,16 +1,9 @@
 <?php
 
-
 namespace SelrahcD\PostgresRabbitMq\MessageStorage;
-
-
-use SelrahcD\PostgresRabbitMq\MessageStorage\MessageStorage;
 
 class FailingMessageStorage implements MessageStorage
 {
-    /**
-     * @var GoodMessageStorage
-     */
     private GoodMessageStorage $messageStorage;
 
     private int $writeFailure;

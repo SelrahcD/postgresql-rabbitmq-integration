@@ -32,7 +32,6 @@ class PDOWrapper extends \PDO
             $this->commitTransactionExpectedFailureCount--;
             $this->rollBack();
             return false;
-            throw new \Exception('Couldn\'t commit transaction');
         }
 
         return parent::commit();

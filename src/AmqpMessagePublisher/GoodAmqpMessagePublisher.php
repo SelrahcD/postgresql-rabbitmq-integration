@@ -7,15 +7,13 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 class GoodAmqpMessagePublisher implements AmqpMessagePublisher
 {
-    /**
-     * @var AMQPChannel
-     */
     private AMQPChannel $channel;
 
     public function __construct(AMQPChannel $channel)
     {
         $this->channel = $channel;
     }
+
     public function publish(string $message, string $messageId) : void
     {
         $event = new AMQPMessage($message, ['message_id' => $messageId]);

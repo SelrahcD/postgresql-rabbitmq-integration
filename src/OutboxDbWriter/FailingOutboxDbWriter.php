@@ -4,8 +4,6 @@
 namespace SelrahcD\PostgresRabbitMq\OutboxDbWriter;
 
 use Exception;
-use SelrahcD\PostgresRabbitMq\OutboxDbWriter\GoodOutboxBusDbWriter;
-use SelrahcD\PostgresRabbitMq\OutboxDbWriter\OutboxDbWriter;
 
 class FailingOutboxDbWriter implements OutboxDbWriter
 {

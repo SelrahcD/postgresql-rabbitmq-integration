@@ -2,17 +2,12 @@
 
 namespace SelrahcD\PostgresRabbitMq\AmqpMessagePublisher;
 
-use SelrahcD\PostgresRabbitMq\AmqpMessagePublisher\AmqpMessagePublisher;
-
 class FailingAmqpMessagePublisher implements AmqpMessagePublisher
 {
     private GoodAmqpMessagePublisher $messagePublisher;
 
     private int $expectedFailureCount = 1;
 
-    /**
-     * IntermittentRabbitMQMessageBus constructor.
-     */
     public function __construct(GoodAmqpMessagePublisher $messagePublisher, int $expectedFailureCount)
     {
         $this->messagePublisher = $messagePublisher;

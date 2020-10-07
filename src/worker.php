@@ -57,7 +57,6 @@ $callback = function (AMQPMessage $message) use($logger, $messageStorage, $messa
         $outboxMessageBus->sendMessages();
 
     } catch (\Exception $exception) {
-        echo $exception->getMessage();
         $logger->logError($exception->getMessage());
         $logger->logMessageNacked($messageId);
         $message->nack(true);

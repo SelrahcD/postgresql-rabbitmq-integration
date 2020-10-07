@@ -45,64 +45,6 @@ class Logger
         file_put_contents($this->messageLogFile, $log, FILE_APPEND);
     }
 
-    public function hasBeenAcked(string $messageId)
-    {
-        $searchedLog = (string) (new LogMessage())->acked($messageId);
-        $logFile = fopen($this->messageLogFile, 'r');
-
-        while (($line = fgets($logFile)) !== false) {
-            if($line == $searchedLog) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public function hasReceivedMessageReceivedLogForMessageIdAtLeast(string $messageId, int $minimumCalls)
-    {
-        $searchedLog = (string) (new LogMessage())->received($messageId);
-        $logFile = fopen($this->messageLogFile, 'r');
-
-        $count = 0;
-        while (($line = fgets($logFile)) !== false) {
-            if($line == $searchedLog) {
-                $count++;
-            }
-        }
-
-        return $count >= $minimumCalls;
-    }
-
-    public function hasHandledMessageAtLeast(string $messageId, int $minimumCalls)
-    {
-        $searchedLog = (string) (new LogMessage())->handled($messageId);
-        $logFile = fopen($this->messageLogFile, 'r');
-
-        $count = 0;
-        while (($line = fgets($logFile)) !== false) {
-            if($line == $searchedLog) {
-                $count++;
-            }
-        }
-
-        return $count >= $minimumCalls;
-    }
-
-    public function hasReceivedMessageReceivedLogForMessageId(string $messageId)
-    {
-        $searchedLog = (string) (new LogMessage())->received($messageId);
-        $logFile = fopen($this->messageLogFile, 'r');
-
-        while (($line = fgets($logFile)) !== false) {
-            if($line == $searchedLog) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     public function allLogs(): string
     {
         return file_get_contents($this->messageLogFile, 'r');

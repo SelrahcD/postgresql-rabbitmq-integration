@@ -2,7 +2,6 @@
 namespace SelrahcD\PostgresRabbitMq\OutboxDbWriter;
 
 use PDO;
-use SelrahcD\PostgresRabbitMq\OutboxDbWriter\OutboxDbWriter;
 
 class GoodOutboxBusDbWriter implements OutboxDbWriter
 {
