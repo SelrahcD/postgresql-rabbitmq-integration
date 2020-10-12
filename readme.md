@@ -20,3 +20,8 @@ To discover the pattern, you can browse through the code or take the tour to gui
 The tour is available with [Visual studio code](https://code.visualstudio.com/) and the [Code tour extension](https://marketplace.visualstudio.com/items?itemName=vsls-contrib.codetour).
 
 ![Short demonstration of the tour in Visual studio code](./.tours/tour-example.gif)
+
+## Running the tests
+
+Tests are runned using `make test`. This command starts a docker stack with a RabbitMQ and a PostgreSQL containers. A PHP container is started as well and runs tests thanks to PhpUnit.
+
