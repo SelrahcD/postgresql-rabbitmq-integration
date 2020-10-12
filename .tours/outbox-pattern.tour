@@ -1,0 +1,91 @@
+{
+  "title": "Outbox pattern",
+  "steps": [
+    {
+      "file": "src/worker.php",
+      "line": 1,
+      "description": "# Introduction\nThis repo shows the challenges of integrating a SQL database (PostgreSQL here) and RabbitMQ. It demonstrates how the outbox pattern can prevent synchronization issues between stored information in the database and dispatched event.\n\nUdi Dahan made a [great video explaining the challenges of integrating these two types of technologies and the solution](https://vimeo.com/111998645), \nthis tour will guide you through it as well.\n\n## Use case \n\nTo demonstrate the outbox pattern, we will use a made-up use case.\nOur application can receive a command in the form of a message looking like\n```json\n{\n    \"username\": \"New user name\"\n}\n```\nrequesting to register a new user with her username.\nWhen the command is received, a new user must be inserted in the database, and a RegisteredUser event must be published to RabbitMQ for other applications to be notified.\nThe RegisteredUser looks like :\n```json\n{\n   \"eventName\": \"UserRegistered\",\n   \"username\": \"New user name\"\n}\n```"
+    },
+    {
+      "file": "src/worker.php",
+      "line": 28,
+      "description": "# The consumer\nHere is a script acting as a consumer, waiting for messaging being published by RabbitMq in queue `incoming_message_queue`. Each new message is handled by the `$callback` anonymous function. This is the entry point of the use case.\n\nThe consumer job is to receive a message and pass it to a message handler that processes it. Once the command is processed the consumer marks it as handled, signaling to RabbitMQ that the message was acknowledged, with the `ack` method. In case any problem occurs during the message processing, signaled with an exception, the consumer marks the message as not acknowledged, with the `nack` method, and asks RabbitMQ to requeue it. The message will then be re-delivered later, giving our worker another chance to process it correctly.\n\nThis retry system is essential because while the requirements are quite simple, the system can fail in numerous ways.",
+      "selection": {
+        "start": {
+          "line": 29,
+          "character": 10
+        },
+        "end": {
+          "line": 29,
+          "character": 24
+        }
+      }
+    },
+    {
+      "file": "src/worker.php",
+      "line": 29,
+      "description": "# Message is received twice\n\nIf the message is received twice - because it was published twice or for some other reason - we don't want the system to register the user twice. Of course, the requirements are simple, and we could look at the database to avoid recording the user twice. Still, we can imagine dealing with something we can't easily deduplicate - adding an item to a cart is a good example."
+    },
+    {
+      "file": "src/MessageHandler.php",
+      "line": 25,
+      "description": "# Failing to store in database\n\nWhen the message is handled we want to insert a new user in the database. In case the insertion fails, we don't want the `UserRegistered` event to be published. Other parts of the system would react to incorrect information. The easy solution is to emit the event only after the new user is inserted into the database. We'll see later this not so simple."
+    },
+    {
+      "file": "src/MessageHandler.php",
+      "line": 27,
+      "description": "# Failing to publish the event\n\nAs we've just seen, we've put the event's publication after storing the user in the database. Now we're facing a new issue: if we fail to publish the event - RabbitMQ not being available, for instance - the rest of the system doesn't know a new user is registered and is left in an inconsistent state.\n\nWe see that no matter the order of calls to store to the DB or to publish messages to RabbitMQ, a naively designed system would potentially lead us to inconsistencies in our system.\n\nWe'll see how we can design our system to be resilient to failures."
+    },
+    {
+      "file": "src/worker.php",
+      "line": 39,
+      "description": "# Preventing a message from being processed several times\n\nThe solution to the first problem, a message being sent twice, is relatively simple. We need to design our messaging system such as each message being sent is uniquely identified. Here we're using a `message_id` header alongside the body of the message. When a message producer publishes a message to RabbitMQ, it must set the `message_id` header to something unique, here we're going with a UUID. \n\nBeing able to identify each message allows us to deduplicate. As you can see, when a message is received, we extract its `message_id` and check if it was already handled. In case it wasn't, the message is passed to the handler. Otherwise, it doesn't. We record the message as being handled if everything went well. If the same already processed message were to be received again in the future, we wouldn't pass it to the handler and thus would avoid processing it several times."
+    },
+    {
+      "file": "src/OutboxMessageBus.php",
+      "line": 9,
+      "description": "# Outbox message bus\n\nAs seen previously, we need to publish the `UserRegistered` event to RabbitMQ when and only when a new user is inserted in the database. We need the insertion and the event publication to happen atomically. Unfortunately, PostgreSQL and RabbitMQ can't share the same transaction. We have to find another solution.\n\nThe outbox pattern solves this issue by storing events that have to be published by RabbitMQ in the database. Instead of dispatching events directly, they are stored in the database alongside the user insertion in one transaction. Later on, all non-published events are read from the database, dispatched, and then deleted.\n\nHere the `publish` method creates a UUID to be used as the message ID and insert the message encoded as JSON in the database.",
+      "selection": {
+        "start": {
+          "line": 25,
+          "character": 16
+        },
+        "end": {
+          "line": 25,
+          "character": 40
+        }
+      }
+    },
+    {
+      "file": "src/worker.php",
+      "line": 36,
+      "description": "# Speaking about transactions...\n\nWe've just mentioned that we want to insert statements for the user registration and the soon-to-be-published event in the same transaction. We also need the statement recording that a message was handled to be in the same transaction. Indeed, if the message handled record is made in another transaction, we could end up with the first transaction succeeding and the second one failing, the message would then be retried and processed twice. In our case, this would lead to a user registered twice.\n\nBecause managing the transaction is a technical concern that must be dealt with for every message, the worker takes care of it, starting a transaction when the message is received and closing it after the message being handled and recorded has handled.\n\nIn case an error occurs during the processing of the message, the transaction is rollbacked, and the exception is re-thrown, caught by the higher level `try/catch` which not acknowledge -`nack`- the message. The message is then retried later.\n\nIf an error occurs when the transaction is committed an exception is thrown as well and triggers the retry mechanism."
+    },
+    {
+      "file": "src/worker.php",
+      "line": 57,
+      "description": "# Publishing the event\n\nIf everything went well, the user is registered, the event is stored in the database, and the message is recorded as handled. The next and final step is to publish the event to RabbitMQ.\n\nAs we can expect, this is not so simple.",
+      "selection": {
+        "start": {
+          "line": 57,
+          "character": 1
+        },
+        "end": {
+          "line": 58,
+          "character": 1
+        }
+      }
+    },
+    {
+      "file": "src/OutboxMessageBus.php",
+      "line": 28,
+      "description": "# The issue with publishing the event\n\nWhen we want to publish the event, we're looking for all the unsent messages stored in the database.\nOne by one, we publish them to RabbitMQ and delete them from the database.\n\nHere again, things can go wrong:\n- Publishing the event to RabbitMQ can fail\n- Deleting the event from the database can fail\n\nThe first failure is already dealt with. If we cannot dispatch the event an exception is thrown, the worker catches it and requeues the message for later processing.\n\nThe second failure is more interesting. If the deletion fails, an exception is thrown, and the message is requeued as well. The issue is that the event was published to RabbitMQ and will be published again each time the worker processes the message.\n\nThe solution here is to add a way for the consumer to deduplicate a message being received several times. As we've seen previously, the answer is to send alongside the message a unique identifier. Here we choose to send a header `message_id`. Note that the message ID is generated when the message is stored in the database, in the `publish` method, to ensure we're always publishing the message with the same `message_id` header."
+    },
+    {
+      "file": "src/worker.php",
+      "line": 68,
+      "description": "# Ack\n\nThe tour is over. We've seen an example implementation of the outbox pattern applied to PostgreSQL and RabbitMQ integration.\n\nThis code works but is not polished and can be improved in several ways. One important thing is missing for it to be usable in production.\n\nSo far, when an error occurs the messages is placed back in the queue and retried as soon as possible. In the case of RabbitMQ\nor PostgreSQL being down, the message will probably be back for processing before the service is available again, which means the system keeps trying to process something it cannot, adding unnecessary pressure to itself. The solution here is to use a delayed retry strategy, asking RabbitMQ to re-deliver the message after a while.\n\nWe probably should modify the `OutboxMessageBus` code to send only the events relevant to the current message to RabbitMQ. Apart from being able to reason incoming message by incoming message in case of an issue - which is by itself a quite good reason - if we were to run several workers in parallel, it would avoid emitting more duplicate events than necessary."
+    }
+  ],
+  "isPrimary": true
+}
